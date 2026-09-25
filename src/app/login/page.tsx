@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { UserRole } from '@/types';
+import { UserRole, UserProfile } from '@/types';
 import ToastContainer from '@/components/ui/ToastContainer';
 import { 
   Eye, 
@@ -18,6 +18,7 @@ import {
   Car
 } from 'lucide-react';
 import { getAssetUrl } from '@/lib/assets';
+import SocialAuthModal from '@/components/auth/SocialAuthModal';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,26 +40,23 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  
+  // Social authentication modal states
+  const [socialModalOpen, setSocialModalOpen] = useState(false);
+  const [socialProvider, setSocialProvider] = useState<'Google' | 'Github'>('Google');
 
   const handleGoToApp = () => {
     router.push('/');
   };
 
-  const handleSocialAuth = (provider: 'Google' | 'Github') => {
-    const mockEmail = `${provider.toLowerCase()}.user@parkable.com`;
-    const mockName = `${provider} User`;
-    const userProfile = {
-      id: `user-${Date.now()}`,
-      name: mockName,
-      email: mockEmail,
-      role: role,
-      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${mockEmail}`,
-      rating: 5.0,
-      reviews_count: 0,
-      created_at: new Date().toISOString(),
-    };
+  const handleOpenSocialModal = (provider: 'Google' | 'Github') => {
+    setSocialProvider(provider);
+    setSocialModalOpen(true);
+  };
+
+  const handleSocialSuccess = (userProfile: UserProfile) => {
     login(userProfile);
-    addToast('Authenticated', `Signed in with ${provider}`, 'success');
+    addToast('Authenticated', `Signed in as ${userProfile.name} (${socialProvider})`, 'success');
     router.push('/');
   };
 
@@ -71,6 +69,36 @@ export default function LoginPage() {
       const computedName = tab === 'signup' && firstName.trim() 
         ? `${firstName.trim()} ${lastName.trim()}`.trim()
         : email.split('@')[0].replace(/^\w/, (c) => c.toUpperCase());
+
+      // Device credential validation for fixed passwords
+      const STORAGE_KEY_PASSWORDS = 'parkable_account_passwords_v1';
+      let storedPasswords: Record<string, string> = {};
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_PASSWORDS);
+        if (raw) storedPasswords = JSON.parse(raw);
+      } catch {}
+
+      const normalizedEmail = email.trim().toLowerCase();
+
+      if (tab === 'signin') {
+        if (storedPasswords[normalizedEmail] && storedPasswords[normalizedEmail] !== password) {
+          throw new Error('Incorrect password for this account. Please retry.');
+        } else if (!storedPasswords[normalizedEmail]) {
+          storedPasswords[normalizedEmail] = password;
+          try {
+            localStorage.setItem(STORAGE_KEY_PASSWORDS, JSON.stringify(storedPasswords));
+          } catch {}
+        }
+      } else {
+        if (storedPasswords[normalizedEmail] && storedPasswords[normalizedEmail] !== password) {
+          throw new Error('An account with this email already exists with a different password. Please enter the correct password.');
+        } else {
+          storedPasswords[normalizedEmail] = password;
+          try {
+            localStorage.setItem(STORAGE_KEY_PASSWORDS, JSON.stringify(storedPasswords));
+          } catch {}
+        }
+      }
 
       if (isSupabaseConfigured() && supabase) {
         if (tab === 'signup') {
@@ -257,7 +285,7 @@ export default function LoginPage() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => handleSocialAuth('Google')}
+                  onClick={() => handleOpenSocialModal('Google')}
                   className="flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-[#161310] border border-[#383028] hover:bg-[#201b16] hover:border-[#dfba89]/40 text-[#f6f2ec] text-xs font-semibold transition cursor-pointer group shadow-sm"
                 >
                   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -271,7 +299,7 @@ export default function LoginPage() {
 
                 <button
                   type="button"
-                  onClick={() => handleSocialAuth('Github')}
+                  onClick={() => handleOpenSocialModal('Github')}
                   className="flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-[#161310] border border-[#383028] hover:bg-[#201b16] hover:border-[#dfba89]/40 text-[#f6f2ec] text-xs font-semibold transition cursor-pointer group shadow-sm"
                 >
                   <svg className="w-4 h-4 fill-[#f6f2ec] shrink-0" viewBox="0 0 24 24">
@@ -412,6 +440,14 @@ export default function LoginPage() {
 
         </div>
       </div>
+
+      <SocialAuthModal
+        isOpen={socialModalOpen}
+        onClose={() => setSocialModalOpen(false)}
+        provider={socialProvider}
+        onSuccess={handleSocialSuccess}
+        role={role}
+      />
 
       <ToastContainer />
     </div>
