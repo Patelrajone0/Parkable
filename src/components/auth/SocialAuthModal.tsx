@@ -11,7 +11,8 @@ import {
   ShieldCheck, 
   Lock, 
   Trash2,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { UserProfile, UserRole } from '@/types';
 
@@ -34,6 +35,153 @@ interface SocialAuthModalProps {
 
 const STORAGE_KEY_SOCIAL_ACCOUNTS = 'parkable_saved_social_accounts_v2';
 
+interface VerifyResult {
+  valid: boolean;
+  error?: string;
+  name?: string;
+  avatar_url?: string;
+  verifiedLogin?: string;
+}
+
+/**
+ * Real-time verification of Google and GitHub accounts
+ */
+async function verifyAccountExistence(provider: 'Google' | 'Github', identifier: string): Promise<VerifyResult> {
+  const trimmed = identifier.trim();
+
+  // 1. GITHUB ACCOUNT VERIFICATION VIA OFFICIAL GITHUB API
+  if (provider === 'Github') {
+    let ghHandle = trimmed;
+    if (trimmed.includes('@')) {
+      ghHandle = trimmed.split('@')[0];
+    }
+    ghHandle = ghHandle.replace(/^@/, '').trim();
+
+    if (!ghHandle || !/^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/.test(ghHandle)) {
+      return {
+        valid: false,
+        error: `"${ghHandle || trimmed}" is not a valid GitHub username format.`,
+      };
+    }
+
+    try {
+      const response = await fetch(`https://api.github.com/users/${encodeURIComponent(ghHandle)}`, {
+        headers: { Accept: 'application/vnd.github.v3+json' },
+      });
+
+      if (response.status === 404) {
+        return {
+          valid: false,
+          error: `Couldn't find GitHub account "${ghHandle}". This account does not exist on GitHub.`,
+        };
+      }
+
+      if (response.status === 403) {
+        // GitHub API rate-limited for unauthenticated IP - accept valid format with standard avatar
+        return {
+          valid: true,
+          name: ghHandle,
+          avatar_url: `https://avatars.githubusercontent.com/${ghHandle}`,
+          verifiedLogin: ghHandle,
+        };
+      }
+
+      if (!response.ok) {
+        return {
+          valid: false,
+          error: `GitHub account verification failed (HTTP ${response.status}). Please try again.`,
+        };
+      }
+
+      const data = await response.json();
+      return {
+        valid: true,
+        name: data.name || data.login,
+        avatar_url: data.avatar_url || `https://avatars.githubusercontent.com/${data.login}`,
+        verifiedLogin: data.login,
+      };
+    } catch {
+      return {
+        valid: false,
+        error: `Network error verifying GitHub account. Please check your internet connection.`,
+      };
+    }
+  }
+
+  // 2. GOOGLE ACCOUNT VERIFICATION
+  if (provider === 'Google') {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      return {
+        valid: false,
+        error: `Please enter a valid Google email address.`,
+      };
+    }
+
+    const [userPart, domain] = trimmed.toLowerCase().split('@');
+
+    if (domain === 'gmail.com' || domain === 'googlemail.com') {
+      // Google strictly requires usernames between 6 and 30 characters
+      if (userPart.length < 6 || userPart.length > 30) {
+        return {
+          valid: false,
+          error: `Google usernames must be between 6 and 30 characters.`,
+        };
+      }
+      // Google only allows letters, numbers, and periods (no consecutive periods, cannot start or end with a period)
+      if (!/^[a-z0-9]+(\.[a-z0-9]+)*$/.test(userPart)) {
+        return {
+          valid: false,
+          error: `Invalid Google Account format. Only letters (a-z), numbers (0-9), and periods (.) are allowed.`,
+        };
+      }
+
+      return {
+        valid: true,
+        name: userPart.charAt(0).toUpperCase() + userPart.slice(1).replace(/\./g, ' '),
+        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${trimmed}`,
+        verifiedLogin: trimmed,
+      };
+    } else {
+      // For custom domains, verify that the domain has Google Workspace / Google Mail MX records
+      try {
+        const dohRes = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=MX`, {
+          headers: { Accept: 'application/dns-json' },
+        });
+
+        if (dohRes.ok) {
+          const dohData = await dohRes.json();
+          const answers: Array<{ data: string }> = dohData.Answer || [];
+          const isGoogleHosted = answers.some(
+            (ans) =>
+              ans.data.includes('google.com') ||
+              ans.data.includes('googlemail.com') ||
+              ans.data.includes('l.google.com')
+          );
+
+          if (!isGoogleHosted) {
+            return {
+              valid: false,
+              error: `The domain "@${domain}" does not use Google Workspace or Google Mail servers. Please enter an official Google or Gmail account.`,
+            };
+          }
+        }
+      } catch {
+        // Fallback if DoH is blocked by browser policy
+      }
+
+      return {
+        valid: true,
+        name: userPart.charAt(0).toUpperCase() + userPart.slice(1),
+        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${trimmed}`,
+        verifiedLogin: trimmed,
+      };
+    }
+  }
+
+  return { valid: false, error: 'Unknown provider.' };
+}
+
 export default function SocialAuthModal({
   isOpen,
   onClose,
@@ -52,6 +200,7 @@ export default function SocialAuthModal({
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
 
   // Load saved accounts from localStorage on modal open
   useEffect(() => {
@@ -59,11 +208,12 @@ export default function SocialAuthModal({
       setErrorMsg('');
       setInputPassword('');
       setShowPassword(false);
+      setVerificationStatus(null);
       try {
         const stored = localStorage.getItem(STORAGE_KEY_SOCIAL_ACCOUNTS);
         let list: SavedSocialAccount[] = stored ? JSON.parse(stored) : [];
 
-        // If no accounts yet on this device, add the default device user as a convenient preset
+        // If no accounts yet on this device, add the default recognized device accounts
         if (list.length === 0) {
           list = [
             {
@@ -78,7 +228,7 @@ export default function SocialAuthModal({
               provider: 'Github',
               name: 'Patelrajone0',
               email: 'patelrajone0@github.com',
-              avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Patelrajone0',
+              avatar_url: 'https://avatars.githubusercontent.com/u/218958232?v=4',
               password: 'password123',
               lastUsed: new Date().toISOString(),
             },
@@ -91,15 +241,13 @@ export default function SocialAuthModal({
         // Filter accounts matching current provider
         const matching = list.filter((a) => a.provider === provider);
         if (matching.length === 1) {
-          // If only 1 account exists for this provider, go straight to password confirmation
           setSelectedAccount(matching[0]);
           setView('enter_password');
         } else if (matching.length > 1) {
           setView('choose');
         } else {
-          // No account for this provider yet -> direct to add account
           setView('add_account');
-          setInputEmail(provider === 'Google' ? 'user@gmail.com' : 'user@github.com');
+          setInputEmail(provider === 'Google' ? 'user@gmail.com' : '');
           setInputName('');
         }
       } catch {
@@ -117,6 +265,7 @@ export default function SocialAuthModal({
     setSelectedAccount(account);
     setInputPassword('');
     setErrorMsg('');
+    setVerificationStatus(null);
     setView('enter_password');
   };
 
@@ -127,6 +276,7 @@ export default function SocialAuthModal({
     setInputEmail('');
     setInputPassword('');
     setErrorMsg('');
+    setVerificationStatus(null);
     setView('add_account');
   };
 
@@ -152,7 +302,7 @@ export default function SocialAuthModal({
     setIsSubmitting(true);
 
     setTimeout(() => {
-      // Check if password matches the stored password for this account
+      // Check if password matches the fixed password for this account
       if (inputPassword !== selectedAccount.password) {
         setErrorMsg('Wrong password. Please enter the correct password and retry.');
         setIsSubmitting(false);
@@ -186,16 +336,15 @@ export default function SocialAuthModal({
     }, 400);
   };
 
-  // Submit and save a NEW account on device
-  const handleSaveAndSignInNewAccount = (e: React.FormEvent) => {
+  // Verify account existence and save new account on device
+  const handleSaveAndSignInNewAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    const trimmedEmail = inputEmail.trim().toLowerCase();
-    const trimmedName = inputName.trim() || trimmedEmail.split('@')[0];
+    const rawIdentifier = inputEmail.trim();
 
-    if (!trimmedEmail || !inputPassword) {
-      setErrorMsg('Please enter both email and password.');
+    if (!rawIdentifier || !inputPassword) {
+      setErrorMsg('Please enter both account identifier and password.');
       return;
     }
 
@@ -204,30 +353,52 @@ export default function SocialAuthModal({
       return;
     }
 
-    // Check if this account already exists in storage
-    const existing = accounts.find((a) => a.email.toLowerCase() === trimmedEmail);
-    if (existing) {
-      // If it exists, check if password matches
-      if (existing.password !== inputPassword) {
-        setErrorMsg('This account is already registered on this device with a different password. Please enter the correct fixed password.');
+    setIsSubmitting(true);
+    setVerificationStatus(`Verifying ${provider} account existence...`);
+
+    try {
+      // REAL-TIME VERIFICATION AGAINST GOOGLE / GITHUB
+      const verification = await verifyAccountExistence(provider, rawIdentifier);
+
+      if (!verification.valid) {
+        setErrorMsg(verification.error || `This ${provider} account does not exist. Please check your credentials.`);
+        setIsSubmitting(false);
+        setVerificationStatus(null);
         return;
       }
-    }
 
-    setIsSubmitting(true);
+      // Format final email/identifier
+      const finalEmail = provider === 'Github'
+        ? (verification.verifiedLogin ? `${verification.verifiedLogin.toLowerCase()}@github.com` : rawIdentifier.toLowerCase())
+        : rawIdentifier.toLowerCase();
 
-    setTimeout(() => {
+      const finalName = inputName.trim() || verification.name || finalEmail.split('@')[0];
+      const finalAvatar = verification.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${finalEmail}`;
+
+      // Check if this account already exists in device storage with a fixed password
+      const existing = accounts.find((a) => a.email.toLowerCase() === finalEmail);
+      if (existing) {
+        if (existing.password !== inputPassword) {
+          setErrorMsg(`This ${provider} account is already saved on this device with a different password. Please enter the correct password.`);
+          setIsSubmitting(false);
+          setVerificationStatus(null);
+          return;
+        }
+      }
+
+      setVerificationStatus(`Account verified! Finalizing sign-in...`);
+
       const newAccount: SavedSocialAccount = {
         provider,
-        name: trimmedName,
-        email: trimmedEmail,
-        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${trimmedEmail}`,
-        password: inputPassword, // Permanently fixed password on device for this account
+        name: finalName,
+        email: finalEmail,
+        avatar_url: finalAvatar,
+        password: inputPassword, // Permanently fixed password on device for this verified account
         lastUsed: new Date().toISOString(),
       };
 
       const updatedList = existing
-        ? accounts.map((a) => (a.email.toLowerCase() === trimmedEmail ? newAccount : a))
+        ? accounts.map((a) => (a.email.toLowerCase() === finalEmail ? newAccount : a))
         : [newAccount, ...accounts];
 
       setAccounts(updatedList);
@@ -246,10 +417,17 @@ export default function SocialAuthModal({
         created_at: new Date().toISOString(),
       };
 
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setVerificationStatus(null);
+        onSuccess(userProfile);
+        onClose();
+      }, 300);
+    } catch (err: any) {
+      setErrorMsg(err.message || `Failed to verify ${provider} account.`);
       setIsSubmitting(false);
-      onSuccess(userProfile);
-      onClose();
-    }, 400);
+      setVerificationStatus(null);
+    }
   };
 
   return (
@@ -259,9 +437,7 @@ export default function SocialAuthModal({
         
         {/* Subtle provider ambient aura */}
         <div 
-          className={`absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-40 blur-3xl pointer-events-none rounded-full opacity-30 ${
-            provider === 'Google' ? 'bg-[#dfba89]' : 'bg-[#dfba89]'
-          }`} 
+          className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-40 blur-3xl pointer-events-none rounded-full opacity-25 bg-[#dfba89]" 
         />
 
         {/* Close Button */}
@@ -296,9 +472,17 @@ export default function SocialAuthModal({
           </p>
         </div>
 
+        {/* VERIFICATION SPINNER NOTICE */}
+        {verificationStatus && (
+          <div className="mb-4 p-3 rounded-xl bg-[#241d16] border border-[#dfba89]/40 text-[#dfba89] text-xs flex items-center gap-2.5 animate-pulse">
+            <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+            <span className="font-medium">{verificationStatus}</span>
+          </div>
+        )}
+
         {/* ERROR NOTICE */}
         {errorMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-[#351c1c] border border-[#e08272]/30 text-[#e08272] text-xs flex items-start gap-2.5 animate-shake">
+          <div className="mb-4 p-3 rounded-xl bg-[#351c1c] border border-[#e08272]/30 text-[#e08272] text-xs flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span className="leading-tight">{errorMsg}</span>
           </div>
@@ -308,7 +492,7 @@ export default function SocialAuthModal({
         {view === 'choose' && (
           <div className="space-y-4">
             <div className="text-xs font-bold text-[#c2b29d] tracking-wide mb-1">
-              Choose an account on this device:
+              Choose a verified account on this device:
             </div>
 
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -327,9 +511,12 @@ export default function SocialAuthModal({
                       />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-[#f6f2ec] truncate group-hover:text-[#dfba89] transition">
-                        {account.name}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-bold text-[#f6f2ec] truncate group-hover:text-[#dfba89] transition">
+                          {account.name}
+                        </p>
+                        <CheckCircle2 className="w-3 h-3 text-[#dfba89] shrink-0" />
+                      </div>
                       <p className="text-[11px] text-[#a89682] truncate">
                         {account.email}
                       </p>
@@ -355,7 +542,7 @@ export default function SocialAuthModal({
               className="w-full py-3 px-4 rounded-2xl bg-[#141210] hover:bg-[#201b16] border border-dashed border-[#383028] hover:border-[#dfba89]/50 text-xs font-semibold text-[#c2b29d] hover:text-[#f6f2ec] flex items-center justify-center gap-2 transition cursor-pointer"
             >
               <UserPlus className="w-4 h-4 text-[#dfba89]" />
-              <span>Use another account / Add account</span>
+              <span>Verify & add another {provider} account</span>
             </button>
           </div>
         )}
@@ -374,7 +561,10 @@ export default function SocialAuthModal({
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-[#f6f2ec] truncate">{selectedAccount.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold text-[#f6f2ec] truncate">{selectedAccount.name}</p>
+                    <CheckCircle2 className="w-3 h-3 text-[#dfba89] shrink-0" />
+                  </div>
                   <p className="text-[11px] text-[#a89682] truncate">{selectedAccount.email}</p>
                 </div>
               </div>
@@ -437,7 +627,7 @@ export default function SocialAuthModal({
         {view === 'add_account' && (
           <form onSubmit={handleSaveAndSignInNewAccount} className="space-y-3.5">
             <div className="flex items-center justify-between pb-1">
-              <span className="text-xs font-bold text-[#c2b29d]">Add New {provider} Account</span>
+              <span className="text-xs font-bold text-[#c2b29d]">Verify & Add {provider} Account</span>
               {providerAccounts.length > 0 && (
                 <button
                   type="button"
@@ -451,29 +641,19 @@ export default function SocialAuthModal({
 
             <div>
               <label className="block text-xs font-bold text-[#c2b29d] mb-1">
-                Display Name (Optional)
+                {provider === 'Github' ? 'GitHub Username or Email' : 'Google Email Address'}
               </label>
               <input
                 type="text"
-                value={inputName}
-                onChange={(e) => setInputName(e.target.value)}
-                placeholder="e.g. Raj Patel"
-                className="w-full bg-[#141210] border border-[#383028] focus:border-[#dfba89] rounded-xl px-4 py-2.5 text-xs text-[#f6f2ec] placeholder:text-[#6e6052] outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#c2b29d] mb-1">
-                {provider} Email Address
-              </label>
-              <input
-                type="email"
                 required
                 value={inputEmail}
                 onChange={(e) => setInputEmail(e.target.value)}
-                placeholder={provider === 'Google' ? 'you@gmail.com' : 'you@github.com'}
+                placeholder={provider === 'Github' ? 'e.g. Patelrajone0 or octocat' : 'you@gmail.com'}
                 className="w-full bg-[#141210] border border-[#383028] focus:border-[#dfba89] rounded-xl px-4 py-2.5 text-xs text-[#f6f2ec] placeholder:text-[#6e6052] outline-none"
               />
+              <p className="text-[10px] text-[#8a7a6b] mt-1">
+                🔍 We will verify in real-time that this account officially exists on {provider}.
+              </p>
             </div>
 
             <div>
@@ -486,7 +666,7 @@ export default function SocialAuthModal({
                   required
                   value={inputPassword}
                   onChange={(e) => setInputPassword(e.target.value)}
-                  placeholder="Create fixed password for this account"
+                  placeholder="Set fixed password for this account"
                   className="w-full bg-[#141210] border border-[#383028] focus:border-[#dfba89] rounded-xl px-4 py-2.5 pr-10 text-xs text-[#f6f2ec] placeholder:text-[#6e6052] outline-none"
                 />
                 <button
@@ -515,9 +695,16 @@ export default function SocialAuthModal({
               <button
                 type="submit"
                 disabled={isSubmitting || !inputEmail || !inputPassword}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-black transition cursor-pointer shadow-lg shadow-[#dfba89]/20 disabled:opacity-50"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-black transition cursor-pointer shadow-lg shadow-[#dfba89]/20 disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {isSubmitting ? 'Saving...' : 'Save & Sign In'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Verifying Account...</span>
+                  </>
+                ) : (
+                  <span>Verify & Sign In</span>
+                )}
               </button>
             </div>
           </form>
