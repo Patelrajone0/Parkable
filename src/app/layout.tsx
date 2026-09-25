@@ -26,6 +26,7 @@ export const viewport: Viewport = {
 };
 
 import ClientProviders from "@/components/providers/ClientProviders";
+import Script from "next/script";
 
 export default function RootLayout({
   children,
@@ -37,6 +38,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
+      </head>
       <body className="min-h-full flex flex-col bg-[#0e0d0c] text-[#f6f2ec] selection:bg-[#d4a373] selection:text-[#12100e]">
         <ClientProviders>{children}</ClientProviders>
       </body>

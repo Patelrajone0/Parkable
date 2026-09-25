@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { getAssetUrl } from '@/lib/assets';
 import SocialAuthModal from '@/components/auth/SocialAuthModal';
+import GoogleSetupModal from '@/components/auth/GoogleSetupModal';
+import { getGoogleClientId, triggerOfficialGoogleSignIn } from '@/lib/googleAuth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,6 +46,7 @@ export default function LoginPage() {
   // Social authentication modal states
   const [socialModalOpen, setSocialModalOpen] = useState(false);
   const [socialProvider, setSocialProvider] = useState<'Google' | 'Github'>('Google');
+  const [googleSetupOpen, setGoogleSetupOpen] = useState(false);
 
   const handleGoToApp = () => {
     router.push('/');
@@ -51,7 +54,40 @@ export default function LoginPage() {
 
   const handleOpenSocialModal = (provider: 'Google' | 'Github') => {
     setSocialProvider(provider);
-    setSocialModalOpen(true);
+    if (provider === 'Google') {
+      const activeClientId = getGoogleClientId();
+      if (activeClientId) {
+        // Trigger official Google One-Tap / Sign-In popup
+        triggerOfficialGoogleSignIn(
+          activeClientId,
+          (googleUser) => {
+            const userProfile: UserProfile = {
+              id: `user-${googleUser.sub || Date.now()}`,
+              name: googleUser.name,
+              email: googleUser.email,
+              role: role,
+              avatar_url: googleUser.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${googleUser.email}`,
+              rating: 5.0,
+              reviews_count: 0,
+              created_at: new Date().toISOString(),
+            };
+            login(userProfile);
+            addToast('Official Google Sign-In', `Welcome back, ${googleUser.name}!`, 'success');
+            router.push('/');
+          },
+          (err) => {
+            console.warn('Google Identity Services notice:', err);
+            // Fallback to verified account chooser if popup was blocked/dismissed
+            setSocialModalOpen(true);
+          }
+        );
+      } else {
+        // Client ID not yet configured: open setup modal with instructions & demo fallback
+        setGoogleSetupOpen(true);
+      }
+    } else {
+      setSocialModalOpen(true);
+    }
   };
 
   const handleSocialSuccess = (userProfile: UserProfile) => {
@@ -447,6 +483,19 @@ export default function LoginPage() {
         provider={socialProvider}
         onSuccess={handleSocialSuccess}
         role={role}
+      />
+
+      <GoogleSetupModal
+        isOpen={googleSetupOpen}
+        onClose={() => setGoogleSetupOpen(false)}
+        onSaveAndConnect={(clientId) => {
+          setGoogleSetupOpen(false);
+          handleOpenSocialModal('Google');
+        }}
+        onUseFallbackDemo={() => {
+          setGoogleSetupOpen(false);
+          setSocialModalOpen(true);
+        }}
       />
 
       <ToastContainer />
