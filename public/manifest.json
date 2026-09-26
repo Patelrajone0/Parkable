@@ -1,0 +1,51 @@
+{
+  "name": "Parkable - Peer-to-Peer Parking & EV Charging",
+  "short_name": "Parkable",
+  "description": "Find, reserve, and host private parking spaces with instant GPS turn-by-turn navigation.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#181512",
+  "theme_color": "#dfba89",
+  "categories": ["navigation", "travel", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Find Parking",
+      "url": "/",
+      "description": "Browse nearest parking spots and EV bays"
+    },
+    {
+      "name": "List a Spot",
+      "url": "/",
+      "description": "Host your driveway or parking space"
+    }
+  ]
+}
