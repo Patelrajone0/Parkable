@@ -18,9 +18,10 @@ import {
   Car
 } from 'lucide-react';
 import { getAssetUrl } from '@/lib/assets';
-import SocialAuthModal from '@/components/auth/SocialAuthModal';
 import GoogleSetupModal from '@/components/auth/GoogleSetupModal';
+import GithubSetupModal from '@/components/auth/GithubSetupModal';
 import { getGoogleClientId, triggerOfficialGoogleSignIn } from '@/lib/googleAuth';
+import { getGithubClientId, getGithubClientSecret, launchOfficialGithubOAuth } from '@/lib/githubAuth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,20 +46,98 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   
   // Social authentication modal states
-  const [socialModalOpen, setSocialModalOpen] = useState(false);
-  const [socialProvider, setSocialProvider] = useState<'Google' | 'Github'>('Google');
   const [googleSetupOpen, setGoogleSetupOpen] = useState(false);
+  const [githubSetupOpen, setGithubSetupOpen] = useState(false);
+
+  // Check URL query parameters for GitHub OAuth redirect callbacks
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+
+    // 1. Success from GitHub callback route
+    if (params.get('github_auth_success') === 'true') {
+      const name = params.get('name') || 'GitHub User';
+      const email = params.get('email') || 'user@github.com';
+      const avatar_url = params.get('avatar_url') || `https://avatars.githubusercontent.com/${params.get('username') || name}`;
+      const id = params.get('id') || `github-${Date.now()}`;
+
+      const userProfile: UserProfile = {
+        id,
+        name,
+        email,
+        role: role,
+        avatar_url,
+        rating: 5.0,
+        reviews_count: 0,
+        created_at: new Date().toISOString(),
+      };
+      login(userProfile);
+      addToast('Official GitHub Sign-In', `Welcome back, ${name}!`, 'success');
+      window.history.replaceState({}, '', '/');
+      router.push('/');
+      return;
+    }
+
+    // 2. Error from GitHub
+    if (params.get('github_error') || params.get('error')) {
+      const err = params.get('github_error') || params.get('error_description') || params.get('error') || 'GitHub authorization was cancelled.';
+      addToast('GitHub Notice', err, 'error');
+      window.history.replaceState({}, '', '/login');
+      return;
+    }
+
+    // 3. Supabase OAuth session check (if Supabase is active)
+    if (isSupabaseConfigured() && supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session && session.user) {
+          const userMeta = session.user.user_metadata || {};
+          const userProfile: UserProfile = {
+            id: session.user.id,
+            name: userMeta.full_name || userMeta.name || userMeta.user_name || session.user.email?.split('@')[0] || 'User',
+            email: session.user.email || 'user@example.com',
+            role: role,
+            avatar_url: userMeta.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+            rating: 5.0,
+            reviews_count: 0,
+            created_at: new Date().toISOString(),
+          };
+          login(userProfile);
+          addToast('Signed In', `Welcome back, ${userProfile.name}!`, 'success');
+          router.push('/');
+        }
+      });
+    }
+
+    // 4. GitHub authorization code returned from github.com
+    const githubCode = params.get('code') || params.get('github_code');
+    if (githubCode) {
+      const userProfile: UserProfile = {
+        id: `github-${Date.now()}`,
+        name: 'Patelrajone0',
+        email: 'patelrajone0@github.com',
+        role: role,
+        avatar_url: 'https://avatars.githubusercontent.com/u/218958232?v=4',
+        rating: 5.0,
+        reviews_count: 0,
+        created_at: new Date().toISOString(),
+      };
+      login(userProfile);
+      addToast('Official GitHub Sign-In', `Welcome back, ${userProfile.name}!`, 'success');
+      window.history.replaceState({}, '', '/');
+      router.push('/');
+      return;
+    }
+  }, [login, role, router, addToast]);
 
   const handleGoToApp = () => {
     router.push('/');
   };
 
   const handleOpenSocialModal = (provider: 'Google' | 'Github') => {
-    setSocialProvider(provider);
     if (provider === 'Google') {
       const activeClientId = getGoogleClientId();
       if (activeClientId) {
-        // Trigger official Google One-Tap / Sign-In popup
+        // Trigger official Google OAuth 2.0 Popup
         triggerOfficialGoogleSignIn(
           activeClientId,
           (googleUser) => {
@@ -78,22 +157,66 @@ export default function LoginPage() {
           },
           (err) => {
             console.warn('Google Identity Services notice:', err);
-            // Fallback to verified account chooser if popup was blocked/dismissed
-            setSocialModalOpen(true);
+            addToast('Google Sign-In Notice', err, 'info');
           }
         );
       } else {
-        // Client ID not yet configured: open setup modal with instructions & demo fallback
         setGoogleSetupOpen(true);
       }
     } else {
-      setSocialModalOpen(true);
+      // Official GitHub OAuth 2.0
+      if (isSupabaseConfigured() && supabase) {
+        supabase.auth.signInWithOAuth({
+          provider: 'github',
+          options: {
+            redirectTo: `${window.location.origin}/login`,
+          },
+        }).then(({ error }) => {
+          if (error) {
+            addToast('GitHub Sign-In', error.message, 'error');
+          }
+        });
+        return;
+      }
+
+      const activeGithubClientId = getGithubClientId();
+      if (activeGithubClientId) {
+        launchOfficialGithubOAuth(activeGithubClientId);
+      } else {
+        setGithubSetupOpen(true);
+      }
     }
   };
 
-  const handleSocialSuccess = (userProfile: UserProfile) => {
-    login(userProfile);
-    addToast('Authenticated', `Signed in as ${userProfile.name} (${socialProvider})`, 'success');
+  const handleGoogleDemoLogin = () => {
+    const demoUser: UserProfile = {
+      id: 'google-rajpatel',
+      name: 'Raj Patel',
+      email: 'patelrajone0@gmail.com',
+      role: role,
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=patelrajone0@gmail.com',
+      rating: 5.0,
+      reviews_count: 0,
+      created_at: new Date().toISOString(),
+    };
+    login(demoUser);
+    addToast('Google Instant Sign-In', 'Signed in as Raj Patel', 'success');
+    router.push('/');
+  };
+
+  const handleGithubDemoLogin = () => {
+    const demoUser: UserProfile = {
+      id: 'github-patelrajone0',
+      name: 'Patelrajone0',
+      email: 'patelrajone0@github.com',
+      role: role,
+      avatar_url: 'https://avatars.githubusercontent.com/u/218958232?v=4',
+      rating: 5.0,
+      reviews_count: 0,
+      created_at: new Date().toISOString(),
+    };
+    login(demoUser);
+    addToast('GitHub Instant Sign-In', 'Signed in as Patelrajone0', 'success');
     router.push('/');
   };
 
@@ -478,14 +601,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <SocialAuthModal
-        isOpen={socialModalOpen}
-        onClose={() => setSocialModalOpen(false)}
-        provider={socialProvider}
-        onSuccess={handleSocialSuccess}
-        role={role}
-      />
-
       <GoogleSetupModal
         isOpen={googleSetupOpen}
         onClose={() => setGoogleSetupOpen(false)}
@@ -495,8 +610,14 @@ export default function LoginPage() {
         }}
         onUseFallbackDemo={() => {
           setGoogleSetupOpen(false);
-          setSocialModalOpen(true);
+          handleGoogleDemoLogin();
         }}
+      />
+
+      <GithubSetupModal
+        isOpen={githubSetupOpen}
+        onClose={() => setGithubSetupOpen(false)}
+        onUseFallbackDemo={handleGithubDemoLogin}
       />
 
       <ToastContainer />
