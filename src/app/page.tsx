@@ -147,6 +147,7 @@ function MainApp() {
         spot={checkoutSpot}
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
+        onBookingComplete={() => setIsActiveBookingModalOpen(true)}
       />
 
       {/* List a Spot Multi-step Wizard */}

@@ -172,18 +172,21 @@ export default function ActiveBookingCard({
           </div>
 
           {/* Location & Navigation Action */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#201c18] border border-[#383028]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#201c18] border border-[#dfba89]/40 shadow-md shadow-[#dfba89]/5">
             <div className="text-xs">
-              <span className="font-bold text-[#dfba89] block">Spot Address:</span>
+              <span className="font-bold text-[#dfba89] block flex items-center gap-1.5">
+                <span>Spot Address</span>
+                <span className="px-1.5 py-0.5 rounded bg-[#dfba89]/20 text-[#dfba89] text-[9px] font-black uppercase">GPS Ready</span>
+              </span>
               <span className="text-[#f6f2ec] mt-0.5 block">{booking.spot_address}</span>
             </div>
 
             <button
               onClick={handleOpenNavigation}
-              className="shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
+              className="shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#e5c499] to-[#c59b6d] hover:from-[#ebd3af] hover:to-[#d4a87b] text-[#12100e] font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#dfba89]/30 ring-2 ring-[#dfba89] hover:ring-4 transition-all duration-200 cursor-pointer animate-pulse"
             >
-              <Navigation className="w-4 h-4 text-[#12100e]" />
-              <span>Turn-by-Turn GPS</span>
+              <Navigation className="w-4 h-4 text-[#12100e] fill-[#12100e]" />
+              <span>Open Navigation</span>
             </button>
           </div>
 

@@ -16,19 +16,22 @@ import {
   Loader2, 
   Sparkles,
   Info,
-  Apple
+  Apple,
+  Navigation
 } from 'lucide-react';
 
 interface CheckoutModalProps {
   spot: ParkingSpot | null;
   isOpen: boolean;
   onClose: () => void;
+  onBookingComplete?: () => void;
 }
 
 export default function CheckoutModal({
   spot,
   isOpen,
   onClose,
+  onBookingComplete,
 }: CheckoutModalProps) {
   const { createBooking, platformCommissionRate, currentUser, addToast } = useApp();
 
@@ -42,6 +45,11 @@ export default function CheckoutModal({
   const [cardName, setCardName] = useState<string>(currentUser?.name || 'Parkable Driver');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+
+  const handleClose = () => {
+    setIsSuccess(false);
+    onClose();
+  };
 
   if (!isOpen || !spot) return null;
 
@@ -80,11 +88,7 @@ export default function CheckoutModal({
 
         setIsProcessing(false);
         setIsSuccess(true);
-
-        setTimeout(() => {
-          setIsSuccess(false);
-          onClose();
-        }, 1200);
+        addToast('Spot Reserved! 🚀', `Booked ${spot.title}. Open navigation to begin your trip.`, 'success');
       } catch (err) {
         setIsProcessing(false);
         addToast('Payment Failed', 'Could not authorize mockup transaction.', 'error');
@@ -102,25 +106,134 @@ export default function CheckoutModal({
         <div className="p-4 sm:p-5 bg-[#12100e] text-[#f6f2ec] border-b border-[#383028] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#dfba89]/10 border border-[#dfba89]/30 flex items-center justify-center text-[#dfba89]">
-              <Lock className="w-4 h-4" />
+              {isSuccess ? <Check className="w-4 h-4 text-[#dfba89]" /> : <Lock className="w-4 h-4" />}
             </div>
             <div>
-              <h3 className="font-bold text-base leading-tight text-[#f6f2ec]">Secure Parking Checkout</h3>
-              <p className="text-[11px] text-[#a89682]">Instant reservation & guaranteed spot</p>
+              <h3 className="font-bold text-base leading-tight text-[#f6f2ec]">
+                {isSuccess ? 'Booking Confirmed' : 'Secure Parking Checkout'}
+              </h3>
+              <p className="text-[11px] text-[#a89682]">
+                {isSuccess ? 'Live navigation & access directions' : 'Instant reservation & guaranteed spot'}
+              </p>
             </div>
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isProcessing}
-            className="w-8 h-8 rounded-full bg-[#1c1814] hover:bg-[#28211a] text-[#f6f2ec] border border-[#383028] flex items-center justify-center transition"
+            className="w-8 h-8 rounded-full bg-[#1c1814] hover:bg-[#28211a] text-[#f6f2ec] border border-[#383028] flex items-center justify-center transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Scrollable Form Body */}
-        <form onSubmit={handlePayAndConfirm} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+        {isSuccess ? (
+          /* ======================================================== */
+          /* BOOKING SUCCESS SCREEN: HIGHLIGHTED OPEN NAVIGATION CTA */
+          /* ======================================================== */
+          <div className="flex-1 overflow-y-auto p-5 sm:p-7 flex flex-col items-center text-center space-y-5 animate-in zoom-in-95 duration-200">
+            {/* Success Icon */}
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#dfba89]/30 to-[#b37d4e]/10 border-2 border-[#dfba89] flex items-center justify-center text-[#dfba89] shadow-xl shadow-[#dfba89]/20">
+                <Check className="w-8 h-8 stroke-[3]" />
+              </div>
+              <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-[#34d399] text-[#12100e] text-[9px] font-black uppercase tracking-wider shadow-sm">
+                Active
+              </span>
+            </div>
+
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#dfba89]/15 border border-[#dfba89]/30 text-[#dfba89] text-xs font-bold mb-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Reservation Guaranteed</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-[#f6f2ec]">
+                Spot Booked Successfully!
+              </h3>
+              <p className="text-xs text-[#a89682] max-w-sm mx-auto mt-1">
+                Your parking bay at <strong className="text-[#f6f2ec]">{spot.title}</strong> is ready for vehicle <span className="font-mono text-[#dfba89] font-bold">{vehiclePlate}</span>.
+              </p>
+            </div>
+
+            {/* Destination & Access Summary Card */}
+            <div className="w-full bg-[#201c18] border border-[#383028] rounded-2xl p-4 text-left space-y-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="text-[10px] font-bold text-[#a89682] uppercase tracking-wider block">
+                    Spot Destination
+                  </span>
+                  <span className="text-xs font-bold text-[#f6f2ec] block mt-0.5">
+                    {spot.address}, {spot.city}
+                  </span>
+                </div>
+                <span className="text-xs font-mono font-bold text-[#dfba89] bg-[#12100e] px-2.5 py-1 rounded-lg border border-[#383028]">
+                  {durationHours} {durationHours === 1 ? 'Hour' : 'Hours'}
+                </span>
+              </div>
+
+              {spot.gate_code && (
+                <div className="p-2.5 rounded-xl bg-[#12100e] border border-[#383028] flex items-center justify-between">
+                  <span className="text-xs text-[#a89682]">Gate Access Code / PIN:</span>
+                  <span className="font-mono font-black text-[#dfba89] text-sm tracking-widest">
+                    {spot.gate_code}
+                  </span>
+                </div>
+              )}
+
+              {spot.access_instructions && (
+                <p className="text-[11px] text-[#c2b29d] bg-[#12100e] p-2.5 rounded-xl border border-[#383028]">
+                  <strong className="text-[#dfba89]">Directions: </strong>
+                  {spot.access_instructions}
+                </p>
+              )}
+            </div>
+
+            {/* PROMINENTLY HIGHLIGHTED OPEN NAVIGATION OPTION */}
+            <div className="w-full space-y-2 pt-1">
+              <div className="flex items-center justify-center gap-1.5 text-xs font-black text-[#dfba89] uppercase tracking-wider animate-bounce">
+                <span>📍 Recommended Next Step</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const url = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}`;
+                  window.open(url, '_blank');
+                }}
+                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#e5c499] to-[#c59b6d] hover:from-[#ebd3af] hover:to-[#d4a87b] text-[#12100e] font-black text-base flex items-center justify-center gap-3 shadow-2xl shadow-[#dfba89]/40 ring-4 ring-[#dfba89]/50 hover:ring-[#dfba89]/80 transition-all duration-300 cursor-pointer active:scale-[0.98] animate-pulse"
+              >
+                <Navigation className="w-5 h-5 text-[#12100e] fill-[#12100e]" />
+                <span>Open Navigation (GPS)</span>
+              </button>
+              <p className="text-[11px] text-[#a89682]">
+                Opens Google Maps or Apple Maps with live GPS route to the spot entrance
+              </p>
+            </div>
+
+            {/* Secondary Actions */}
+            <div className="w-full pt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  handleClose();
+                  if (onBookingComplete) onBookingComplete();
+                }}
+                className="flex-1 py-3 rounded-xl bg-[#1c1814] hover:bg-[#28211a] text-[#f6f2ec] border border-[#383028] font-bold text-xs transition cursor-pointer"
+              >
+                View Live Parking Pass
+              </button>
+              <button
+                type="button"
+                onClick={handleClose}
+                className="py-3 px-4 rounded-xl border border-[#383028] hover:bg-[#201c18] text-[#a89682] hover:text-[#f6f2ec] text-xs font-semibold transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Scrollable Form Body */
+          <form onSubmit={handlePayAndConfirm} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           {/* Spot Summary Mini Card */}
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#201c18] border border-[#383028]">
             <img
@@ -381,7 +494,9 @@ export default function CheckoutModal({
             )}
           </button>
         </form>
+      )}
       </div>
     </div>
   );
 }
+
