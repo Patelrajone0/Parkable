@@ -53,10 +53,20 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
   const handleBrandClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (typeof window !== 'undefined') {
-      if (window.location.pathname === '/' && !window.location.search && !window.location.hash) {
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+      const homePath = basePath ? `${basePath}/` : '/';
+      const curPath = window.location.pathname;
+
+      const isHome = curPath === homePath || 
+                     curPath === basePath || 
+                     curPath === `${basePath}` || 
+                     curPath === '/' || 
+                     curPath === '';
+
+      if (isHome && !window.location.search && !window.location.hash) {
         window.location.reload();
       } else {
-        window.location.href = '/';
+        window.location.href = homePath;
       }
     }
   };
@@ -66,7 +76,7 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Brand Logo & Refresh */}
         <div className="flex items-center gap-3">
-          <a 
+          <Link 
             href="/"
             onClick={handleBrandClick}
             title="Refresh Parkable"
@@ -87,7 +97,7 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
                 Airbnb for Private Parking
               </p>
             </div>
-          </a>
+          </Link>
         </div>
 
         {/* Right Actions */}
