@@ -50,9 +50,10 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
     requestSignOut();
   };
 
-  const handleBrandClick = () => {
+  const handleBrandClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (typeof window !== 'undefined') {
-      if (window.location.pathname === '/') {
+      if (window.location.pathname === '/' && !window.location.search && !window.location.hash) {
         window.location.reload();
       } else {
         window.location.href = '/';
@@ -63,29 +64,30 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
   return (
     <header className="sticky top-0 z-30 w-full bg-[#141210]/95 backdrop-blur-md border-b border-[#2d2620] shadow-md shadow-black/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        {/* Brand Logo */}
+        {/* Brand Logo & Refresh */}
         <div className="flex items-center gap-3">
-          <div 
+          <a 
+            href="/"
             onClick={handleBrandClick}
-            title="Refresh website"
-            className="flex items-center gap-2.5 cursor-pointer group select-none"
+            title="Refresh Parkable"
+            className="flex items-center gap-3 cursor-pointer group select-none transition-opacity hover:opacity-95"
           >
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#dfba89]/40 bg-[#12100e] shadow-md shadow-[#dfba89]/20 group-hover:scale-105 transition-transform duration-200 shrink-0 flex items-center justify-center p-0.5">
-                <img
-                  src={getAssetUrl('/logos/shield-icon.jpg')}
-                  alt="Parkable Logo"
-                  className="w-full h-full object-contain"
-                />
-              </div>
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#dfba89]/40 bg-[#12100e] shadow-md shadow-[#dfba89]/20 group-hover:scale-105 transition-transform duration-200 shrink-0 flex items-center justify-center">
+              <img
+                src={getAssetUrl('/logos/shield-icon.jpg?v=2')}
+                alt="Parkable Logo"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <div>
-              <span className="font-black text-xl tracking-tight text-[#f6f2ec] group-hover:text-[#dfba89] transition block">
+              <span className="font-black text-xl tracking-tight text-[#f6f2ec] group-hover:text-[#dfba89] transition block leading-tight">
                 Parkable
               </span>
-              <p className="text-[11px] text-[#a89682] font-medium hidden sm:block">
+              <p className="text-[11px] text-[#a89682] font-medium hidden sm:block leading-none mt-0.5">
                 Airbnb for Private Parking
               </p>
             </div>
-          </div>
+          </a>
         </div>
 
         {/* Right Actions */}

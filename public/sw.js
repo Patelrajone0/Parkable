@@ -1,5 +1,5 @@
 // Parkable Progressive Web App Service Worker
-const CACHE_NAME = 'parkable-cache-v1';
+const CACHE_NAME = 'parkable-cache-v2';
 const PRECACHE_RESOURCES = [
   '/',
   '/manifest.json',

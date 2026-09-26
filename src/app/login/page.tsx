@@ -309,11 +309,11 @@ export default function LoginPage() {
   if (isLoadingAuth) {
     return (
       <div className="min-h-screen bg-[#0e0d0c] flex flex-col items-center justify-center text-[#f6f2ec]">
-        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-[#dfba89]/40 bg-[#12100e] shadow-xl shadow-[#dfba89]/20 flex items-center justify-center p-1 mb-4 animate-pulse">
+        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-[#dfba89]/40 bg-[#12100e] shadow-xl shadow-[#dfba89]/20 flex items-center justify-center mb-4 animate-pulse">
           <img
-            src={getAssetUrl('/logos/shield-icon.jpg')}
+            src={getAssetUrl('/logos/shield-icon.jpg?v=2')}
             alt="Parkable Logo"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
           />
         </div>
         <p className="text-sm font-semibold tracking-wide text-[#a89682]">Verifying session...</p>
@@ -340,11 +340,11 @@ export default function LoginPage() {
           {/* Top Brand Header */}
           <div className="relative z-10 pt-1">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-8 h-8 rounded-xl overflow-hidden border border-[#dfba89]/50 bg-[#12100e] shrink-0 shadow-md shadow-[#dfba89]/20 flex items-center justify-center p-0.5">
+              <div className="w-8 h-8 rounded-xl overflow-hidden border border-[#dfba89]/50 bg-[#12100e] shrink-0 shadow-md shadow-[#dfba89]/20 flex items-center justify-center">
                 <img 
-                  src={getAssetUrl('/logos/shield-icon.jpg')} 
+                  src={getAssetUrl('/logos/shield-icon.jpg?v=2')} 
                   alt="Parkable" 
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <span className="font-black text-lg text-[#f6f2ec] tracking-tight">Parkable</span>

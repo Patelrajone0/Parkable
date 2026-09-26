@@ -64,11 +64,11 @@ function MainApp() {
   if (isLoadingAuth) {
     return (
       <div className="min-h-screen bg-[#0e0d0c] flex flex-col items-center justify-center text-[#f6f2ec]">
-        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-[#dfba89]/40 bg-[#12100e] shadow-xl shadow-[#dfba89]/20 flex items-center justify-center p-1 mb-3 animate-pulse">
+        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-[#dfba89]/40 bg-[#12100e] shadow-xl shadow-[#dfba89]/20 flex items-center justify-center mb-3 animate-pulse">
           <img
-            src={getAssetUrl('/logos/shield-icon.jpg')}
+            src={getAssetUrl('/logos/shield-icon.jpg?v=2')}
             alt="Parkable Logo"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
           />
         </div>
         <p className="text-sm font-semibold tracking-wide text-[#a89682]">Verifying session...</p>
