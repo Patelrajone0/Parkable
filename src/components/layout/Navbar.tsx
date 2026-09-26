@@ -102,10 +102,29 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
             </button>
           )}
 
+          {/* Quick Mode Toggle */}
+          <button
+            onClick={() => setActiveRole(activeRole === 'driver' ? 'host' : 'driver')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#383028] bg-[#181512] hover:bg-[#25201b] hover:border-[#dfba89]/40 text-[#c9b7a4] hover:text-[#f6f2ec] text-xs font-semibold transition cursor-pointer"
+            title={`Switch to ${activeRole === 'driver' ? 'Host' : 'Driver'} mode`}
+          >
+            {activeRole === 'driver' ? (
+              <>
+                <Building2 className="w-3.5 h-3.5 text-[#dfba89]" />
+                <span className="hidden sm:inline">Host Hub</span>
+              </>
+            ) : (
+              <>
+                <Compass className="w-3.5 h-3.5 text-[#dfba89]" />
+                <span className="hidden sm:inline">Driver Map</span>
+              </>
+            )}
+          </button>
+
           {/* List a Spot CTA */}
           <button
             onClick={() => setIsListSpotOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold shadow-md shadow-[#d4a373]/20 hover:shadow-lg transition-all duration-200"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold shadow-md shadow-[#d4a373]/20 hover:shadow-lg transition-all duration-200 cursor-pointer"
           >
             <PlusCircle className="w-4 h-4 text-[#12100e]" />
             <span>List a Spot</span>

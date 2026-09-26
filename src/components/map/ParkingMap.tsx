@@ -28,5 +28,9 @@ const DynamicMap = dynamic(() => import('./ParkingMapInner'), {
 });
 
 export default function ParkingMap(props: ParkingMapProps) {
-  return <DynamicMap {...props} />;
+  return (
+    <div className="w-full h-full relative min-h-[350px]">
+      <DynamicMap {...props} />
+    </div>
+  );
 }

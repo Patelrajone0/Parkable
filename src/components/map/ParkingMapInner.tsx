@@ -35,37 +35,77 @@ export default function ParkingMapInner({
 
   // Initialize Map
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    const container = mapContainerRef.current;
+    if (!container) return;
 
-    if (!mapInstanceRef.current) {
-      const initialCenter: [number, number] = userLocation 
-        ? [userLocation.lat, userLocation.lng] 
-        : center;
-
-      const map = L.map(mapContainerRef.current, {
-        center: initialCenter,
-        zoom: zoom,
-        zoomControl: false,
-      });
-
-      // Sleek Dark CartoDB tile provider for Dark Desert Titanium theme
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-        maxZoom: 19,
-        subdomains: 'abcd',
-      }).addTo(map);
-
-      // Add Zoom control at top right
-      L.control.zoom({ position: 'topright' }).addTo(map);
-
-      // Add layer group for spot markers
-      const markersLayer = L.layerGroup().addTo(map);
-      markersLayerRef.current = markersLayer;
-
-      mapInstanceRef.current = map;
+    // Reset leaflet ID if container was re-mounted by React
+    if ((container as any)._leaflet_id) {
+      delete (container as any)._leaflet_id;
     }
 
-    return () => {};
+    const initialCenter: [number, number] = userLocation 
+      ? [userLocation.lat, userLocation.lng] 
+      : center;
+
+    const map = L.map(container, {
+      center: initialCenter,
+      zoom: zoom,
+      zoomControl: false,
+    });
+
+    // Dark CartoDB tile provider matching the Dark Desert Titanium aesthetic
+    const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+      maxZoom: 19,
+      subdomains: 'abcd',
+    }).addTo(map);
+
+    // Fallback to OpenStreetMap if CartoDB network tile fails
+    tileLayer.on('tileerror', () => {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+      }).addTo(map);
+    });
+
+    // Add Zoom control at top right
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    // Add layer group for spot markers
+    const markersLayer = L.layerGroup().addTo(map);
+    markersLayerRef.current = markersLayer;
+
+    mapInstanceRef.current = map;
+
+    // Critical: Call invalidateSize on multiple layout passes so map tiles render immediately
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 80);
+    const t2 = setTimeout(() => map.invalidateSize(), 250);
+    const t3 = setTimeout(() => map.invalidateSize(), 600);
+
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+    window.addEventListener('resize', handleResize);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
+      resizeObserver = new ResizeObserver(() => {
+        map.invalidateSize();
+      });
+      resizeObserver.observe(container);
+    }
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      window.removeEventListener('resize', handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      map.remove();
+      mapInstanceRef.current = null;
+    };
   }, []);
 
   // Update center when prop changes
@@ -251,8 +291,12 @@ export default function ParkingMapInner({
   }, [spots, selectedSpot, onSelectSpot]);
 
   return (
-    <div className="relative w-full h-full min-h-[350px]">
-      <div ref={mapContainerRef} className="w-full h-full" />
+    <div className="absolute inset-0 w-full h-full min-h-[350px]">
+      <div 
+        ref={mapContainerRef} 
+        className="w-full h-full"
+        style={{ minHeight: '350px' }}
+      />
     </div>
   );
 }

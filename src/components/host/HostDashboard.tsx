@@ -18,7 +18,8 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Zap,
-  MapPin
+  MapPin,
+  Compass
 } from 'lucide-react';
 
 export default function HostDashboard() {
@@ -30,6 +31,7 @@ export default function HostDashboard() {
     deleteSpot,
     updateSpot,
     setIsListSpotOpen,
+    setActiveRole,
     platformCommissionRate,
     addToast,
   } = useApp();
@@ -79,6 +81,13 @@ export default function HostDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveRole('driver')}
+            className="px-4 py-3 rounded-2xl bg-[#1e1914] hover:bg-[#2c231a] text-[#dfba89] border border-[#383028] hover:border-[#dfba89]/40 font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer"
+          >
+            <Compass className="w-4 h-4 text-[#dfba89]" />
+            <span>View Driver Map</span>
+          </button>
           <button
             onClick={() => setIsListSpotOpen(true)}
             className="px-5 py-3 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-[#dfba89]/20 transition-all duration-200 cursor-pointer"
