@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { VehicleSize, SpaceType } from '@/types';
 import ParkingMap from '@/components/map/ParkingMap';
@@ -11,7 +11,6 @@ import {
   Check, 
   Zap, 
   ShieldCheck, 
-  DollarSign, 
   Sparkles, 
   ArrowRight, 
   ArrowLeft,
@@ -22,7 +21,15 @@ import {
   UploadCloud,
   ImageIcon,
   Trash2,
-  Plus
+  Plus,
+  Navigation,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  CheckCircle2,
+  Sliders,
+  Loader2,
+  Compass
 } from 'lucide-react';
 
 interface ListSpotModalProps {
@@ -30,15 +37,111 @@ interface ListSpotModalProps {
   onClose: () => void;
 }
 
+interface QuickPreset {
+  id: string;
+  name: string;
+  tag: string;
+  icon: string;
+  spaceType: SpaceType;
+  vehicleSize: VehicleSize;
+  hourlyRate: number;
+  amenities: string[];
+  dimensions: string;
+  photoUrl: string;
+  description: string;
+}
+
+const QUICK_PRESETS: QuickPreset[] = [
+  {
+    id: 'driveway',
+    name: 'Home Driveway',
+    tag: 'Most Popular',
+    icon: '🏡',
+    spaceType: 'open',
+    vehicleSize: 'compact-suv',
+    hourlyRate: 60,
+    amenities: ['cctv', 'lighting', 'wide_clearance'],
+    dimensions: '5.2m x 2.6m x 2.4m',
+    photoUrl: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80',
+    description: 'Paved, spacious private residential driveway with direct street access and night lighting.',
+  },
+  {
+    id: 'ev_bay',
+    name: 'EV Charging Bay',
+    tag: 'High Demand',
+    icon: '⚡',
+    spaceType: 'covered',
+    vehicleSize: 'compact-suv',
+    hourlyRate: 120,
+    amenities: ['ev_charging', 'cctv', 'lighting', 'gated_access'],
+    dimensions: '5.4m x 2.8m x 2.4m',
+    photoUrl: 'https://images.unsplash.com/photo-1617886903355-9354752c0fd1?w=800&auto=format&fit=crop&q=80',
+    description: 'Covered parking bay equipped with Level 2 EV charger, 24/7 CCTV surveillance and secure access.',
+  },
+  {
+    id: 'garage',
+    name: 'Covered Garage',
+    tag: 'Weatherproof',
+    icon: '🏢',
+    spaceType: 'covered',
+    vehicleSize: 'compact-suv',
+    hourlyRate: 80,
+    amenities: ['cctv', 'lighting', 'gated_access', 'guard'],
+    dimensions: '5.4m x 2.8m x 2.4m',
+    photoUrl: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800&auto=format&fit=crop&q=80',
+    description: 'Secure covered garage space protected from sun and rain with security guard on duty.',
+  },
+  {
+    id: 'twowheeler',
+    name: '2-Wheeler Slot',
+    tag: 'Fast Booking',
+    icon: '🏍️',
+    spaceType: 'gated',
+    vehicleSize: '2-wheeler',
+    hourlyRate: 30,
+    amenities: ['cctv', 'lighting', 'gated_access'],
+    dimensions: '2.4m x 1.2m x 2.0m',
+    photoUrl: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=800&auto=format&fit=crop&q=80',
+    description: 'Safe gated parking space reserved specifically for motorcycles and electric scooters.',
+  },
+  {
+    id: 'society',
+    name: 'Apartment Visitor Bay',
+    tag: 'Guarded',
+    icon: '🛡️',
+    spaceType: 'underground',
+    vehicleSize: 'large-suv',
+    hourlyRate: 100,
+    amenities: ['guard', 'cctv', 'gated_access', 'lighting', 'wide_clearance'],
+    dimensions: '5.6m x 3.0m x 2.6m',
+    photoUrl: 'https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?w=800&auto=format&fit=crop&q=80',
+    description: 'Designated visitor parking slot in premium gated apartment complex with 24/7 security.',
+  },
+];
+
 export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
-  const { addSpot, mapCenter, platformCommissionRate, addToast } = useApp();
+  const { 
+    addSpot, 
+    mapCenter, 
+    platformCommissionRate, 
+    addToast,
+    userLiveLocation,
+    setActiveRole 
+  } = useApp();
+
+  // Mode: 'express' (1-screen instant listing) or 'wizard' (step-by-step)
+  const [mode, setMode] = useState<'express' | 'wizard'>('express');
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('driveway');
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState<boolean>(false);
+  const [isDetectingLocation, setIsDetectingLocation] = useState<boolean>(false);
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Form State
+  const defaultPreset = QUICK_PRESETS[0];
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(defaultPreset.description);
   const [address, setAddress] = useState('88, 100 Feet Road, Indiranagar');
   const [city, setCity] = useState('Bengaluru');
   const [pinCoords, setPinCoords] = useState<{ lat: number; lng: number }>({
@@ -46,23 +149,128 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
     lng: 77.6412,
   });
 
-  const [spaceType, setSpaceType] = useState<SpaceType>('covered');
-  const [vehicleSize, setVehicleSize] = useState<VehicleSize>('compact-suv');
-  const [dimensions, setDimensions] = useState('5.4m x 2.8m x 2.4m');
-  const [amenities, setAmenities] = useState<string[]>(['cctv', 'lighting', 'gated_access']);
-  const [rules, setRules] = useState<string>('');
+  const [spaceType, setSpaceType] = useState<SpaceType>(defaultPreset.spaceType);
+  const [vehicleSize, setVehicleSize] = useState<VehicleSize>(defaultPreset.vehicleSize);
+  const [dimensions, setDimensions] = useState(defaultPreset.dimensions);
+  const [amenities, setAmenities] = useState<string[]>(defaultPreset.amenities);
+  const [rules, setRules] = useState<string>('No blocking driveway, Park within marked bay');
   const [gateCode, setGateCode] = useState('');
   const [accessInstructions, setAccessInstructions] = useState('');
-  const [hourlyRate, setHourlyRate] = useState<number>(100);
+  const [hourlyRate, setHourlyRate] = useState<number>(defaultPreset.hourlyRate);
   const [isActive, setIsActive] = useState<boolean>(true);
   
   // File upload & Camera references
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([
-    'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80'
-  ]);
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([defaultPreset.photoUrl]);
+
+  // Sync initial GPS location if available
+  useEffect(() => {
+    if (userLiveLocation && userLiveLocation.lat && isOpen) {
+      setPinCoords(userLiveLocation);
+    }
+  }, [userLiveLocation, isOpen]);
+
+  if (!isOpen) return null;
+
+  // Apply a 1-click preset
+  const handleApplyPreset = (preset: QuickPreset) => {
+    setSelectedPresetId(preset.id);
+    setSpaceType(preset.spaceType);
+    setVehicleSize(preset.vehicleSize);
+    setHourlyRate(preset.hourlyRate);
+    setAmenities(preset.amenities);
+    setDimensions(preset.dimensions);
+    setDescription(preset.description);
+    setUploadedPhotos([preset.photoUrl]);
+
+    // Update title smartly
+    const roadSummary = address ? address.split(',')[0] : 'Indiranagar';
+    setTitle(`${preset.name} near ${roadSummary}`);
+    addToast('Template Applied', `Configured as ${preset.name} (₹${preset.hourlyRate}/hr)`, 'info');
+  };
+
+  // 1-Click Auto-Detect Location with OpenStreetMap Nominatim reverse geocode
+  const handleDetectLocation = () => {
+    setIsDetectingLocation(true);
+
+    const applyCoords = async (lat: number, lng: number) => {
+      setPinCoords({ lat, lng });
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+          { headers: { Accept: 'application/json' } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.address) {
+            const road = data.address.road || data.address.pedestrian || data.address.suburb || '';
+            const area = data.address.suburb || data.address.neighbourhood || data.address.city_district || '';
+            const houseNo = data.address.house_number ? `${data.address.house_number}, ` : '';
+            const streetLine = `${houseNo}${road}${area && area !== road ? `, ${area}` : ''}`.trim() || data.display_name?.split(',').slice(0, 2).join(',') || 'Current Location';
+            const cityFound = data.address.city || data.address.town || data.address.village || data.address.county || 'Bengaluru';
+            
+            setAddress(streetLine);
+            setCity(cityFound);
+
+            const activePreset = QUICK_PRESETS.find(p => p.id === selectedPresetId) || defaultPreset;
+            setTitle(`${activePreset.name} on ${streetLine}`);
+
+            addToast('Location Detected! 📍', `${streetLine}, ${cityFound}`, 'success');
+          }
+        }
+      } catch (err) {
+        console.warn('Reverse geocoding note:', err);
+        addToast('Coordinates Updated', `Set to ${lat.toFixed(4)}, ${lng.toFixed(4)}`, 'info');
+      } finally {
+        setIsDetectingLocation(false);
+      }
+    };
+
+    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          applyCoords(pos.coords.latitude, pos.coords.longitude);
+        },
+        (err) => {
+          if (userLiveLocation && userLiveLocation.lat) {
+            applyCoords(userLiveLocation.lat, userLiveLocation.lng);
+          } else {
+            applyCoords(mapCenter[0], mapCenter[1]);
+          }
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    } else if (userLiveLocation && userLiveLocation.lat) {
+      applyCoords(userLiveLocation.lat, userLiveLocation.lng);
+    } else {
+      applyCoords(mapCenter[0], mapCenter[1]);
+    }
+  };
+
+  // Map pin placement handler
+  const handlePinPlaced = async (coords: { lat: number; lng: number }) => {
+    setPinCoords(coords);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${coords.lat}&lon=${coords.lng}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.address) {
+          const road = data.address.road || data.address.pedestrian || data.address.suburb || '';
+          const area = data.address.suburb || data.address.neighbourhood || '';
+          const fullStreet = [road, area].filter(Boolean).join(', ');
+          if (fullStreet) {
+            setAddress(fullStreet);
+            const cityFound = data.address.city || data.address.town || 'Bengaluru';
+            setCity(cityFound);
+          }
+        }
+      }
+    } catch {
+      // quiet fallback
+    }
+  };
 
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -76,7 +284,6 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
         if (e.target?.result) {
           const resultStr = e.target.result as string;
           setUploadedPhotos((prev) => {
-            // If the only photo is the default initial placeholder, replace it with the uploaded one
             if (prev.length === 1 && prev[0].includes('unsplash.com')) {
               return [resultStr];
             }
@@ -93,13 +300,12 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
     setUploadedPhotos((prev) => {
       const updated = prev.filter((_, i) => i !== index);
       if (updated.length === 0) {
-        return ['https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80'];
+        const curPreset = QUICK_PRESETS.find(p => p.id === selectedPresetId) || defaultPreset;
+        return [curPreset.photoUrl];
       }
       return updated;
     });
   };
-
-  if (!isOpen) return null;
 
   const toggleAmenity = (id: string) => {
     setAmenities((prev) =>
@@ -109,8 +315,8 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
 
   const handleNextStep = () => {
     if (currentStep === 1) {
-      if (!title.trim() || !address.trim()) {
-        addToast('Missing Details', 'Please provide a title and address for your spot.', 'error');
+      if (!address.trim()) {
+        addToast('Address Required', 'Please enter or auto-detect your spot address.', 'error');
         return;
       }
     }
@@ -125,21 +331,24 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const activePreset = QUICK_PRESETS.find(p => p.id === selectedPresetId) || defaultPreset;
+    const finalTitle = title.trim() || `${activePreset.name} on ${address.split(',')[0] || city}`;
+
     try {
       await addSpot({
-        title: title || `${spaceType.toUpperCase()} Parking on ${address}`,
-        description: description || 'Spacious, secure private parking space with easy road access.',
-        address,
-        city,
+        title: finalTitle,
+        description: description.trim() || activePreset.description,
+        address: address.trim() || 'Indiranagar 100ft Road',
+        city: city.trim() || 'Bengaluru',
         lat: pinCoords.lat,
         lng: pinCoords.lng,
         hourly_rate: hourlyRate,
         vehicle_size: vehicleSize,
         space_type: spaceType,
         amenities,
-        rules: rules ? rules.split(',').map((r: string) => r.trim()).filter(Boolean) : [],
+        rules: rules ? rules.split(',').map((r: string) => r.trim()).filter(Boolean) : ['No blocking exit'],
         dimensions,
-        photos: uploadedPhotos.length > 0 ? uploadedPhotos : ['https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80'],
+        photos: uploadedPhotos.length > 0 ? uploadedPhotos : [activePreset.photoUrl],
         is_active: isActive,
         instant_book: true,
         gate_code: gateCode,
@@ -148,6 +357,8 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
 
       setIsSubmitting(false);
       onClose();
+      setActiveRole('host');
+      addToast('Listing Published! 🚀', `"${finalTitle}" is now live for drivers to book.`, 'success');
     } catch (err) {
       setIsSubmitting(false);
       addToast('Error', 'Failed to publish spot listing.', 'error');
@@ -157,108 +368,179 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
   // Commission calculations
   const platformFee = Math.round(hourlyRate * platformCommissionRate);
   const hostNetHourly = hourlyRate - platformFee;
+  const estimatedMonthly = hostNetHourly * 4 * 30; // 4 hrs/day x 30 days
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-2xl bg-[#181512] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border border-[#383028]"
+        className="relative w-full max-w-2xl bg-[#181512] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] border border-[#383028]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="p-4 sm:p-5 bg-[#12100e] text-[#f6f2ec] border-b border-[#383028] flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#dfba89] uppercase tracking-widest">
-                Host Portal
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#dfba89]/20 text-[#dfba89] border border-[#dfba89]/40 flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5" />
+                Fast List
               </span>
               <span className="text-[#756758]">•</span>
-              <span className="text-xs text-[#a89682]">Step {currentStep} of 4</span>
+              <span className="text-xs text-[#a89682]">Host Portal</span>
             </div>
-            <h3 className="font-bold text-lg text-[#f6f2ec]">List Your Parking Spot</h3>
+            <h3 className="font-extrabold text-base sm:text-lg text-[#f6f2ec] mt-0.5">
+              List Your Parking Spot
+            </h3>
           </div>
 
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#1c1814] hover:bg-[#28211a] text-[#f6f2ec] border border-[#383028] flex items-center justify-center transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Mode Switcher Pill */}
+            <div className="hidden sm:flex items-center bg-[#1c1814] p-1 rounded-xl border border-[#383028] text-xs">
+              <button
+                type="button"
+                onClick={() => setMode('express')}
+                className={`px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  mode === 'express'
+                    ? 'bg-[#dfba89] text-[#12100e] shadow-xs'
+                    : 'text-[#a89682] hover:text-[#f6f2ec]'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Express</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('wizard')}
+                className={`px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  mode === 'wizard'
+                    ? 'bg-[#dfba89] text-[#12100e] shadow-xs'
+                    : 'text-[#a89682] hover:text-[#f6f2ec]'
+                }`}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Wizard</span>
+              </button>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-[#1c1814] hover:bg-[#28211a] text-[#f6f2ec] border border-[#383028] flex items-center justify-center transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-full bg-[#241f1a] h-1.5 shrink-0">
-          <div
-            className="bg-gradient-to-r from-[#dfba89] to-[#b37d4e] h-full transition-all duration-300"
-            style={{ width: `${(currentStep / 4) * 100}%` }}
-          />
-        </div>
+        {/* Wizard Progress Bar (Only in Wizard Mode) */}
+        {mode === 'wizard' && (
+          <div className="w-full bg-[#241f1a] h-1.5 shrink-0">
+            <div
+              className="bg-gradient-to-r from-[#dfba89] to-[#b37d4e] h-full transition-all duration-300"
+              style={{ width: `${(currentStep / 4) * 100}%` }}
+            />
+          </div>
+        )}
 
-        {/* Step Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 text-[#f6f2ec]">
-          {/* STEP 1: Location & Map Pin */}
-          {currentStep === 1 && (
-            <div className="space-y-4 animate-in fade-in duration-200">
+        {/* Content Body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 text-[#f6f2ec] space-y-5">
+
+          {/* ========================================================= */}
+          {/* MODE: EXPRESS 1-MINUTE LISTING (FASTEST, NO RED TAPE)    */}
+          {/* ========================================================= */}
+          {mode === 'express' && (
+            <div className="space-y-5 animate-in fade-in duration-200">
+              
+              {/* Section 1: 1-Click Smart Presets */}
               <div>
-                <h4 className="font-bold text-base text-[#f6f2ec]">Spot Location & Address</h4>
-                <p className="text-xs text-[#a89682] mt-0.5">
-                  Pinpoint the exact location on the map so drivers can navigate seamlessly.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                  Spot Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Shaded Driveway with EV Charger near Indiranagar Metro"
-                  className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                    Street Address *
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-black uppercase tracking-wider text-[#dfba89] flex items-center gap-1.5">
+                    <span>1. Select Spot Template</span>
+                    <span className="text-[10px] font-normal text-[#a89682]">(Auto-fills 90% of details)</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="e.g. 42, 12th Main Rd, HAL 2nd Stage"
-                    className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                  />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="e.g. Bengaluru"
-                    className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                  />
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {QUICK_PRESETS.map((preset) => {
+                    const isSelected = selectedPresetId === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handleApplyPreset(preset)}
+                        className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden cursor-pointer ${
+                          isSelected
+                            ? 'border-[#dfba89] bg-[#dfba89]/15 shadow-md shadow-[#dfba89]/10 ring-1 ring-[#dfba89]/50'
+                            : 'border-[#383028] bg-[#201c18]/80 hover:bg-[#28211a] hover:border-[#dfba89]/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-2xl">{preset.icon}</span>
+                          <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                            isSelected 
+                              ? 'bg-[#dfba89] text-[#12100e]' 
+                              : 'bg-[#12100e] text-[#a89682] border border-[#383028]'
+                          }`}>
+                            {preset.tag}
+                          </span>
+                        </div>
+                        <div className="font-bold text-xs text-[#f6f2ec] leading-tight">
+                          {preset.name}
+                        </div>
+                        <div className="text-[11px] font-semibold text-[#dfba89] mt-1">
+                          ₹{preset.hourlyRate}<span className="text-[#a89682] font-normal">/hr</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Interactive Pin Placement Map */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#a89682]">
-                    Click Map to Place Pin:
+              {/* Section 2: Location & Address with 1-Click GPS */}
+              <div className="p-4 rounded-2xl bg-[#1c1814] border border-[#383028] space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-wider text-[#dfba89] flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#dfba89]" />
+                    <span>2. Spot Location</span>
                   </label>
-                  <span className="text-[11px] font-mono text-[#dfba89] font-semibold">
-                    {pinCoords.lat.toFixed(4)}, {pinCoords.lng.toFixed(4)}
-                  </span>
+
+                  <button
+                    type="button"
+                    disabled={isDetectingLocation}
+                    onClick={handleDetectLocation}
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-50"
+                  >
+                    {isDetectingLocation ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Navigation className="w-3.5 h-3.5 text-[#12100e]" />
+                    )}
+                    <span>{isDetectingLocation ? 'Locating...' : '📍 Auto-Detect GPS'}</span>
+                  </button>
                 </div>
-                <div className="h-56 w-full rounded-2xl overflow-hidden border border-[#383028] relative shadow-inner">
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="sm:col-span-2">
+                    <input
+                      type="text"
+                      required
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="e.g. 42, 100 Feet Rd, Indiranagar"
+                      className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="City (e.g. Bengaluru)"
+                      className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                    />
+                  </div>
+                </div>
+
+                {/* Compact Interactive Map Preview */}
+                <div className="h-44 w-full rounded-xl overflow-hidden border border-[#383028] relative shadow-inner">
                   <ParkingMap
                     spots={[]}
                     selectedSpot={null}
@@ -266,482 +548,655 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
                     center={[pinCoords.lat, pinCoords.lng]}
                     zoom={15}
                     interactivePinPlacement={true}
-                    onPinPlaced={(coords) => setPinCoords(coords)}
+                    onPinPlaced={handlePinPlaced}
                     pinCoords={pinCoords}
                   />
-                  <div className="absolute bottom-2 left-2 right-2 bg-[#141210]/90 border border-[#383028] backdrop-blur-md text-[#f6f2ec] text-[11px] p-2 rounded-xl text-center pointer-events-none z-20">
-                    📍 Click anywhere on the map or drag the gold pin to set the spot entry gate
+                  <div className="absolute bottom-2 left-2 right-2 bg-[#141210]/90 border border-[#383028] backdrop-blur-md text-[#f6f2ec] text-[10px] py-1 px-2.5 rounded-lg text-center pointer-events-none z-20 flex items-center justify-center gap-1.5 shadow-sm">
+                    <span className="text-[#dfba89]">📍</span>
+                    <span>Click or drag pin to adjust entrance gate</span>
+                    <span className="text-[#756758]">|</span>
+                    <span className="font-mono text-[#dfba89]">{pinCoords.lat.toFixed(4)}, {pinCoords.lng.toFixed(4)}</span>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* STEP 2: Space Type & Vehicle Capacity */}
-          {currentStep === 2 && (
-            <div className="space-y-4 animate-in fade-in duration-200">
-              <div>
-                <h4 className="font-bold text-base text-[#f6f2ec]">Space Details & Vehicle Compatibility</h4>
-                <p className="text-xs text-[#a89682] mt-0.5">
-                  Specify space configuration so drivers know if their car fits.
-                </p>
-              </div>
-
-              {/* Space Type Selector */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-2">
-                  Space Type
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { id: 'covered', label: 'Covered Roof', icon: '☔' },
-                    { id: 'open', label: 'Open Driveway', icon: '☀️' },
-                    { id: 'underground', label: 'Underground', icon: '🏢' },
-                    { id: 'gated', label: 'Gated Villa', icon: '🏡' },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setSpaceType(item.id as SpaceType)}
-                      className={`p-3 rounded-xl border text-center transition cursor-pointer ${
-                        spaceType === item.id
-                          ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold shadow-xs'
-                          : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
-                      }`}
-                    >
-                      <div className="text-xl mb-1">{item.icon}</div>
-                      <div className="text-xs">{item.label}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Vehicle Size Capacity */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-2">
-                  Maximum Vehicle Size
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {[
-                    { id: '2-wheeler', label: '2-Wheeler (Bike / Scooter)', desc: 'Fits motorcycles, scooters & EV 2W' },
-                    { id: 'hatchback', label: 'Hatchback (Compact)', desc: 'Fits Swift, i20, Polo, Tiago' },
-                    { id: 'compact-suv', label: 'Compact SUV (Creta / Seltos)', desc: 'Fits Hyundai Creta, Brezza, Nexon, Kia' },
-                    { id: 'large-suv', label: 'Large SUV / Truck (Fortuner)', desc: 'Fits Fortuner, Endeavour, Thar, Safari' },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setVehicleSize(item.id as VehicleSize)}
-                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                        vehicleSize === item.id
-                          ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold shadow-xs'
-                          : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
-                      }`}
-                    >
-                      <div className="text-xs font-bold">{item.label}</div>
-                      <div className="text-[11px] text-[#a89682] mt-0.5 font-normal">{item.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dimensions */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                  Dimensions (L x W x H)
-                </label>
-                <input
-                  type="text"
-                  value={dimensions}
-                  onChange={(e) => setDimensions(e.target.value)}
-                  placeholder="e.g. 5.4m x 2.8m x 2.4m"
-                  className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                  Description & Features
-                </label>
-                <textarea
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe your parking space, ease of turning, proximity to landmarks..."
-                  className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: Amenities, Access & Photos */}
-          {currentStep === 3 && (
-            <div className="space-y-4 animate-in fade-in duration-200">
-              <div>
-                <h4 className="font-bold text-base text-[#f6f2ec]">Amenities, Access Code & Photos</h4>
-                <p className="text-xs text-[#a89682] mt-0.5">
-                  High-value amenities like EV charging and CCTV help spots earn up to 40% more.
-                </p>
-              </div>
-
-              {/* Amenities Grid */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-2">
-                  Available Amenities
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {[
-                    { id: 'cctv', label: '24/7 CCTV', icon: '📹' },
-                    { id: 'ev_charging', label: 'EV Charger', icon: '⚡' },
-                    { id: 'guard', label: 'Security Guard', icon: '👮' },
-                    { id: 'gated_access', label: 'Gated Access', icon: '🔒' },
-                    { id: 'lighting', label: 'Well Lit at Night', icon: '💡' },
-                    { id: 'wide_clearance', label: 'Wide Clearance', icon: '↔️' },
-                  ].map((amenity) => (
-                    <button
-                      key={amenity.id}
-                      type="button"
-                      onClick={() => toggleAmenity(amenity.id)}
-                      className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs transition cursor-pointer ${
-                        amenities.includes(amenity.id)
-                          ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold'
-                          : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
-                      }`}
-                    >
-                      <span className="text-base">{amenity.icon}</span>
-                      <span>{amenity.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Gate Passcode & Instructions */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                    Gate Code / Keypad PIN
-                  </label>
-                  <input
-                    type="text"
-                    value={gateCode}
-                    onChange={(e) => setGateCode(e.target.value)}
-                    placeholder="e.g. 4209 or 'Ask Guard'"
-                    className="w-full px-3.5 py-2.5 text-xs font-mono font-bold bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                    Access Instructions
-                  </label>
-                  <input
-                    type="text"
-                    value={accessInstructions}
-                    onChange={(e) => setAccessInstructions(e.target.value)}
-                    placeholder="e.g. Key in 4209, slot is on the left"
-                    className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                  />
-                </div>
-              </div>
-
-              {/* Spot Photos: Device Upload & Camera Capture */}
-              <div className="space-y-3">
+              {/* Section 3: Hourly Pricing & Net Income */}
+              <div className="p-4 rounded-2xl bg-[#1c1814] border border-[#383028] space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682]">
-                    Parking Photos ({uploadedPhotos.length})
+                  <label className="text-xs font-black uppercase tracking-wider text-[#dfba89]">
+                    3. Hourly Rate & Earnings
                   </label>
-                  <span className="text-[11px] text-[#dfba89] font-semibold">
-                    First photo is your cover
+                  <span className="text-[11px] font-bold text-[#34d399] bg-[#34d399]/15 px-2 py-0.5 rounded-md border border-[#34d399]/30">
+                    Est. ₹{estimatedMonthly.toLocaleString()}/mo passive
                   </span>
                 </div>
 
-                {/* Hidden File & Camera Inputs */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handleFiles(e.target.files)}
-                  className="hidden"
-                />
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) => handleFiles(e.target.files)}
-                  className="hidden"
-                />
-
-                {/* Drag & Drop Upload Zone */}
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                    handleFiles(e.dataTransfer.files);
-                  }}
-                  className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all ${
-                    isDragging
-                      ? 'border-[#dfba89] bg-[#dfba89]/10 scale-[1.01]'
-                      : 'border-[#383028] hover:border-[#dfba89] bg-[#201c18]/60 hover:bg-[#28211a]/80'
-                  }`}
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#12100e] border border-[#383028] shadow-xs flex items-center justify-center mx-auto mb-2 text-[#dfba89]">
-                    <Camera className="w-6 h-6" />
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-bold text-[#dfba89]">₹</span>
+                    <input
+                      type="number"
+                      min="20"
+                      max="1000"
+                      step="5"
+                      value={hourlyRate}
+                      onChange={(e) => setHourlyRate(parseInt(e.target.value) || 0)}
+                      className="w-full pl-8 pr-12 py-2 text-xl font-black bg-[#100e0d] text-[#dfba89] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                    />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#a89682]">/ hr</span>
                   </div>
 
-                  <h5 className="font-bold text-xs sm:text-sm text-[#f6f2ec]">
-                    Click to Take Photo or Upload from Device
-                  </h5>
-                  <p className="text-[11px] text-[#a89682] max-w-xs mx-auto mt-1 mb-3">
-                    Drag and drop image files here, take a picture with your phone camera, or choose from your gallery
-                  </p>
-
-                  {/* Dual Action Buttons */}
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => cameraInputRef.current?.click()}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-                    >
-                      <Camera className="w-3.5 h-3.5 text-[#12100e]" />
-                      <span>Take Photo (Camera)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 rounded-xl bg-[#12100e] hover:bg-[#1a1612] text-[#f6f2ec] border border-[#383028] font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-                    >
-                      <UploadCloud className="w-3.5 h-3.5 text-[#dfba89]" />
-                      <span>Upload from Device</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Uploaded Photos Gallery Preview */}
-                {uploadedPhotos.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {uploadedPhotos.map((photo, idx) => (
-                        <div
-                          key={idx}
-                          className="relative h-28 rounded-xl overflow-hidden border-2 border-[#383028] bg-[#100e0d] group shadow-xs"
-                        >
-                          <img
-                            src={photo}
-                            alt={`Spot photo ${idx + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          {idx === 0 && (
-                            <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] text-[9px] font-black uppercase tracking-wider shadow-sm">
-                              Cover Photo
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleRemovePhoto(idx)}
-                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#100e0d]/80 hover:bg-rose-700 text-white flex items-center justify-center transition shadow-sm opacity-90 group-hover:opacity-100 cursor-pointer"
-                            title="Remove photo"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-
-                      {/* Add more button */}
+                  {/* Fast price chips */}
+                  <div className="flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                    {[30, 60, 80, 100, 120, 150].map((rate) => (
                       <button
+                        key={rate}
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="h-28 rounded-xl border-2 border-dashed border-[#383028] hover:border-[#dfba89] bg-[#201c18] hover:bg-[#28211a] flex flex-col items-center justify-center gap-1 text-[#a89682] hover:text-[#dfba89] transition cursor-pointer"
+                        onClick={() => setHourlyRate(rate)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          hourlyRate === rate
+                            ? 'bg-[#dfba89] text-[#12100e]'
+                            : 'bg-[#201c18] border border-[#383028] text-[#c2b29d] hover:bg-[#28211a]'
+                        }`}
                       >
-                        <Plus className="w-5 h-5 text-[#dfba89]" />
-                        <span className="text-[11px] font-bold">+ Add More</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Presets for quick selection */}
-                <div className="pt-1">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] font-bold text-[#756758] uppercase tracking-wider">
-                      Or pick from sample parking photos:
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-                    {[
-                      {
-                        label: 'Covered Driveway',
-                        url: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80',
-                      },
-                      {
-                        label: 'Underground Bay',
-                        url: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800&auto=format&fit=crop&q=80',
-                      },
-                      {
-                        label: 'Paved Courtyard',
-                        url: 'https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?w=800&auto=format&fit=crop&q=80',
-                      },
-                      {
-                        label: 'EV Charging Slot',
-                        url: 'https://images.unsplash.com/photo-1617886903355-9354752c0fd1?w=800&auto=format&fit=crop&q=80',
-                      },
-                    ].map((preset) => (
-                      <button
-                        key={preset.label}
-                        type="button"
-                        onClick={() => {
-                          setUploadedPhotos((prev) => [preset.url, ...prev.filter((p) => p !== preset.url)]);
-                          addToast('Preset Selected', `Selected ${preset.label} sample photo`);
-                        }}
-                        className="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#383028] bg-[#201c18] hover:bg-[#28211a] hover:border-[#dfba89] text-[11px] font-medium text-[#c2b29d] hover:text-[#dfba89] transition cursor-pointer"
-                      >
-                        + {preset.label}
+                        ₹{rate}
                       </button>
                     ))}
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* STEP 4: Pricing & Availability */}
-          {currentStep === 4 && (
-            <div className="space-y-4 animate-in fade-in duration-200">
-              <div>
-                <h4 className="font-bold text-base text-[#f6f2ec]">Set Hourly Pricing & Availability</h4>
-                <p className="text-xs text-[#a89682] mt-0.5">
-                  You set the rate drivers pay per hour. Platform takes a 10% fee.
-                </p>
-              </div>
-
-              {/* Hourly Price Selector */}
-              <div className="p-4 rounded-2xl bg-[#201c18] border border-[#383028] text-center space-y-3">
-                <span className="text-xs font-bold text-[#a89682] uppercase tracking-wider">
-                  Hourly Rate (INR)
-                </span>
-                <div className="flex items-center justify-center gap-1 text-[#f6f2ec]">
-                  <span className="text-2xl font-bold text-[#dfba89]">₹</span>
-                  <input
-                    type="number"
-                    min="20"
-                    max="1000"
-                    step="5"
-                    value={hourlyRate}
-                    onChange={(e) => setHourlyRate(parseInt(e.target.value) || 0)}
-                    className="w-28 text-center text-4xl font-black bg-[#100e0d] text-[#dfba89] rounded-xl border border-[#383028] py-1 focus:ring-2 focus:ring-[#dfba89]/60"
-                  />
-                  <span className="text-sm font-semibold text-[#a89682]">/ hr</span>
-                </div>
-
-                {/* Price presets */}
-                <div className="flex justify-center gap-2 pt-1">
-                  {[50, 80, 100, 150, 200].map((rate) => (
-                    <button
-                      key={rate}
-                      type="button"
-                      onClick={() => setHourlyRate(rate)}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                        hourlyRate === rate
-                          ? 'bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] font-bold'
-                          : 'bg-[#100e0d] border border-[#383028] text-[#c2b29d] hover:bg-[#1a1612]'
-                      }`}
-                    >
-                      ₹{rate}
-                    </button>
-                  ))}
+                {/* Earnings breakdown banner */}
+                <div className="flex items-center justify-between text-[11px] text-[#a89682] pt-1 border-t border-[#2c251e]">
+                  <span>Driver pays: <strong className="text-[#f6f2ec]">₹{hourlyRate}/hr</strong></span>
+                  <span>Platform fee: <span className="text-[#e08272]">10% (₹{platformFee})</span></span>
+                  <span>You take home: <strong className="text-[#34d399] font-bold">₹{hostNetHourly}/hr</strong></span>
                 </div>
               </div>
 
-              {/* Revenue & Commission breakdown */}
-              <div className="p-4 rounded-2xl bg-[#201c18] border border-[#383028] space-y-2 text-xs text-[#a89682]">
-                <div className="flex justify-between">
-                  <span>Driver Hourly Rate</span>
-                  <span className="font-bold text-[#f6f2ec]">₹{hourlyRate}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Platform Commission (10%)</span>
-                  <span className="font-bold text-[#e08272]">-₹{platformFee}</span>
-                </div>
-                <hr className="border-[#2c251e] my-1.5" />
-                <div className="flex justify-between items-baseline text-sm font-black text-[#f6f2ec]">
-                  <span>Your Net Earnings per Hour:</span>
-                  <span className="text-xl text-[#dfba89]">₹{hostNetHourly} / hr</span>
-                </div>
-                <p className="text-[11px] text-[#a89682] pt-1">
-                  💡 A spot booked 4 hours/day earns approx <strong className="text-[#dfba89]">₹{hostNetHourly * 4 * 30}/month</strong> in passive revenue!
-                </p>
-              </div>
+              {/* Instant Publish Button (Primary) */}
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#dfba89]/25 transition cursor-pointer active:scale-[0.99] disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#12100e]" />
+                    <span>Publishing Listing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-[#12100e]" />
+                    <span>⚡ Publish Spot Now (Instant Live)</span>
+                  </>
+                )}
+              </button>
 
-              {/* Availability Toggle */}
-              <div className="p-4 rounded-2xl bg-[#201c18] border border-[#383028] flex items-center justify-between">
-                <div>
-                  <h5 className="font-bold text-xs text-[#f6f2ec]">Available Immediately</h5>
-                  <p className="text-[11px] text-[#a89682]">
-                    When active, drivers can immediately discover and book this space.
-                  </p>
-                </div>
+              {/* Expandable Advanced Options Section */}
+              <div className="border border-[#383028] rounded-2xl bg-[#141210] overflow-hidden">
                 <button
                   type="button"
-                  onClick={() => setIsActive(!isActive)}
-                  className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                    isActive ? 'bg-[#dfba89]' : 'bg-[#383028]'
-                  }`}
+                  onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                  className="w-full p-3.5 flex items-center justify-between text-xs font-bold text-[#c2b29d] hover:text-[#dfba89] transition cursor-pointer"
                 >
-                  <span
-                    className={`block w-4 h-4 rounded-full bg-[#12100e] transition-transform ${
-                      isActive ? 'translate-x-7' : 'translate-x-1'
-                    }`}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-3.5 h-3.5 text-[#dfba89]" />
+                    <span>Customize Details (Photos, Gate PIN, Amenities, Rules)</span>
+                  </div>
+                  {showAdvancedOptions ? (
+                    <ChevronUp className="w-4 h-4 text-[#a89682]" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-[#a89682]" />
+                  )}
                 </button>
+
+                {showAdvancedOptions && (
+                  <div className="p-4 border-t border-[#383028] space-y-4 bg-[#100e0d]/50 animate-in fade-in duration-200">
+                    
+                    {/* Custom Title & Description */}
+                    <div className="space-y-2">
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682]">
+                        Spot Title
+                      </label>
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="e.g. Shaded Driveway with EV Charger near Indiranagar"
+                        className="w-full px-3.5 py-2 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                      />
+                    </div>
+
+                    {/* Space Type & Vehicle Size */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
+                          Space Type
+                        </label>
+                        <select
+                          value={spaceType}
+                          onChange={(e) => setSpaceType(e.target.value as SpaceType)}
+                          className="w-full px-3 py-2 text-xs bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                        >
+                          <option value="open">☀️ Open Driveway</option>
+                          <option value="covered">☔ Covered Roof</option>
+                          <option value="underground">🏢 Underground Bay</option>
+                          <option value="gated">🏡 Gated Villa</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
+                          Max Vehicle Size
+                        </label>
+                        <select
+                          value={vehicleSize}
+                          onChange={(e) => setVehicleSize(e.target.value as VehicleSize)}
+                          className="w-full px-3 py-2 text-xs bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                        >
+                          <option value="2-wheeler">🏍️ 2-Wheeler (Bike / Scooter)</option>
+                          <option value="hatchback">🚗 Hatchback (Compact)</option>
+                          <option value="compact-suv">🚙 Compact SUV (Creta / Nexon)</option>
+                          <option value="large-suv">🚐 Large SUV (Fortuner / Thar)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Gate PIN & Access Instructions */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                          Gate PIN / Keypad Code (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={gateCode}
+                          onChange={(e) => setGateCode(e.target.value)}
+                          placeholder="e.g. 4209 or 'Ask Guard'"
+                          className="w-full px-3.5 py-2 text-xs font-mono font-bold bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                          Access Instructions
+                        </label>
+                        <input
+                          type="text"
+                          value={accessInstructions}
+                          onChange={(e) => setAccessInstructions(e.target.value)}
+                          placeholder="e.g. Bay #4 on the left inside gate"
+                          className="w-full px-3.5 py-2 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Amenities Checklist */}
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
+                        Amenities & Security
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {[
+                          { id: 'cctv', label: '24/7 CCTV', icon: '📹' },
+                          { id: 'ev_charging', label: 'EV Charger', icon: '⚡' },
+                          { id: 'guard', label: 'Security Guard', icon: '👮' },
+                          { id: 'gated_access', label: 'Gated Access', icon: '🔒' },
+                          { id: 'lighting', label: 'Well Lit at Night', icon: '💡' },
+                          { id: 'wide_clearance', label: 'Wide Clearance', icon: '↔️' },
+                        ].map((amenity) => (
+                          <button
+                            key={amenity.id}
+                            type="button"
+                            onClick={() => toggleAmenity(amenity.id)}
+                            className={`p-2 rounded-xl border flex items-center gap-1.5 text-xs transition cursor-pointer ${
+                              amenities.includes(amenity.id)
+                                ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold'
+                                : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
+                            }`}
+                          >
+                            <span>{amenity.icon}</span>
+                            <span className="text-[11px]">{amenity.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Photo Management */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682]">
+                          Parking Photos ({uploadedPhotos.length})
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => cameraInputRef.current?.click()}
+                            className="text-[10px] font-bold text-[#dfba89] hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <Camera className="w-3 h-3" />
+                            Take Photo
+                          </button>
+                          <span className="text-[#383028]">|</span>
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="text-[10px] font-bold text-[#dfba89] hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <UploadCloud className="w-3 h-3" />
+                            Upload
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Hidden inputs */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleFiles(e.target.files)}
+                        className="hidden"
+                      />
+                      <input
+                        ref={cameraInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => handleFiles(e.target.files)}
+                        className="hidden"
+                      />
+
+                      {/* Preview Thumbnails */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {uploadedPhotos.map((photo, idx) => (
+                          <div
+                            key={idx}
+                            className="relative h-20 rounded-xl overflow-hidden border border-[#383028] bg-[#100e0d] group"
+                          >
+                            <img
+                              src={photo}
+                              alt={`Spot photo ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            {idx === 0 && (
+                              <span className="absolute top-1 left-1 px-1.5 py-0.2 rounded bg-[#dfba89] text-[#12100e] text-[8px] font-black uppercase">
+                                Cover
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePhoto(idx)}
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#100e0d]/80 hover:bg-rose-700 text-white flex items-center justify-center transition shadow-sm cursor-pointer"
+                            >
+                              <Trash2 className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+                )}
               </div>
             </div>
           )}
-        </div>
 
-        {/* Footer Navigation Buttons */}
-        <div className="p-4 bg-[#141210] border-t border-[#383028] flex items-center justify-between shrink-0">
-          {currentStep > 1 ? (
-            <button
-              type="button"
-              onClick={handlePrevStep}
-              className="px-4 py-2.5 rounded-xl border border-[#383028] hover:bg-[#201c18] text-[#c2b29d] hover:text-[#f6f2ec] font-bold text-xs flex items-center gap-1.5 cursor-pointer transition"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </button>
-          ) : (
-            <div />
+          {/* ========================================================= */}
+          {/* MODE: STEP-BY-STEP WIZARD (OPTIONAL DETAILED WALKTHROUGH)  */}
+          {/* ========================================================= */}
+          {mode === 'wizard' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              
+              {/* Quick Preset Selector also in Step 1 */}
+              {currentStep === 1 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-base text-[#f6f2ec]">Spot Location & Address</h4>
+                      <p className="text-xs text-[#a89682] mt-0.5">
+                        Pinpoint the exact location on the map so drivers can navigate seamlessly.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isDetectingLocation}
+                      onClick={handleDetectLocation}
+                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                    >
+                      <Navigation className="w-3.5 h-3.5 text-[#12100e]" />
+                      <span>{isDetectingLocation ? 'Locating...' : '📍 Auto-Detect GPS'}</span>
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                      Spot Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g. Shaded Driveway with EV Charger near Indiranagar Metro"
+                      className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                        Street Address *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="e.g. 42, 12th Main Rd, HAL 2nd Stage"
+                        className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                        City
+                      </label>
+                      <input
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder="e.g. Bengaluru"
+                        className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Interactive Pin Placement Map */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#a89682]">
+                        Click Map to Place Pin:
+                      </label>
+                      <span className="text-[11px] font-mono text-[#dfba89] font-semibold">
+                        {pinCoords.lat.toFixed(4)}, {pinCoords.lng.toFixed(4)}
+                      </span>
+                    </div>
+                    <div className="h-52 w-full rounded-2xl overflow-hidden border border-[#383028] relative shadow-inner">
+                      <ParkingMap
+                        spots={[]}
+                        selectedSpot={null}
+                        onSelectSpot={() => {}}
+                        center={[pinCoords.lat, pinCoords.lng]}
+                        zoom={15}
+                        interactivePinPlacement={true}
+                        onPinPlaced={handlePinPlaced}
+                        pinCoords={pinCoords}
+                      />
+                      <div className="absolute bottom-2 left-2 right-2 bg-[#141210]/90 border border-[#383028] backdrop-blur-md text-[#f6f2ec] text-[11px] p-2 rounded-xl text-center pointer-events-none z-20">
+                        📍 Click anywhere on the map or drag the gold pin to set the entry gate
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: Space Type & Vehicle Capacity */}
+              {currentStep === 2 && (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-bold text-base text-[#f6f2ec]">Space Details & Compatibility</h4>
+                    <p className="text-xs text-[#a89682] mt-0.5">
+                      Specify space configuration so drivers know if their vehicle fits.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-2">
+                      Space Type
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { id: 'covered', label: 'Covered Roof', icon: '☔' },
+                        { id: 'open', label: 'Open Driveway', icon: '☀️' },
+                        { id: 'underground', label: 'Underground', icon: '🏢' },
+                        { id: 'gated', label: 'Gated Villa', icon: '🏡' },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setSpaceType(item.id as SpaceType)}
+                          className={`p-3 rounded-xl border text-center transition cursor-pointer ${
+                            spaceType === item.id
+                              ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold shadow-xs'
+                              : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
+                          }`}
+                        >
+                          <div className="text-xl mb-1">{item.icon}</div>
+                          <div className="text-xs">{item.label}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-2">
+                      Maximum Vehicle Size
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {[
+                        { id: '2-wheeler', label: '2-Wheeler (Bike / Scooter)', desc: 'Fits motorcycles, scooters & EV 2W' },
+                        { id: 'hatchback', label: 'Hatchback (Compact)', desc: 'Fits Swift, i20, Polo, Tiago' },
+                        { id: 'compact-suv', label: 'Compact SUV (Creta / Seltos)', desc: 'Fits Hyundai Creta, Brezza, Nexon, Kia' },
+                        { id: 'large-suv', label: 'Large SUV / Truck (Fortuner)', desc: 'Fits Fortuner, Endeavour, Thar, Safari' },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setVehicleSize(item.id as VehicleSize)}
+                          className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                            vehicleSize === item.id
+                              ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold shadow-xs'
+                              : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
+                          }`}
+                        >
+                          <div className="text-xs font-bold">{item.label}</div>
+                          <div className="text-[11px] text-[#a89682] mt-0.5 font-normal">{item.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                      Dimensions (L x W x H)
+                    </label>
+                    <input
+                      type="text"
+                      value={dimensions}
+                      onChange={(e) => setDimensions(e.target.value)}
+                      placeholder="e.g. 5.4m x 2.8m x 2.4m"
+                      className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: Amenities & Photos */}
+              {currentStep === 3 && (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-bold text-base text-[#f6f2ec]">Amenities, Access & Photos</h4>
+                    <p className="text-xs text-[#a89682] mt-0.5">
+                      High-value amenities like EV charging and CCTV help spots earn up to 40% more.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {[
+                      { id: 'cctv', label: '24/7 CCTV', icon: '📹' },
+                      { id: 'ev_charging', label: 'EV Charger', icon: '⚡' },
+                      { id: 'guard', label: 'Security Guard', icon: '👮' },
+                      { id: 'gated_access', label: 'Gated Access', icon: '🔒' },
+                      { id: 'lighting', label: 'Well Lit at Night', icon: '💡' },
+                      { id: 'wide_clearance', label: 'Wide Clearance', icon: '↔️' },
+                    ].map((amenity) => (
+                      <button
+                        key={amenity.id}
+                        type="button"
+                        onClick={() => toggleAmenity(amenity.id)}
+                        className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs transition cursor-pointer ${
+                          amenities.includes(amenity.id)
+                            ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold'
+                            : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
+                        }`}
+                      >
+                        <span className="text-base">{amenity.icon}</span>
+                        <span>{amenity.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                        Gate Code / Keypad PIN
+                      </label>
+                      <input
+                        type="text"
+                        value={gateCode}
+                        onChange={(e) => setGateCode(e.target.value)}
+                        placeholder="e.g. 4209 or 'Ask Guard'"
+                        className="w-full px-3.5 py-2.5 text-xs font-mono font-bold bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                        Access Instructions
+                      </label>
+                      <input
+                        type="text"
+                        value={accessInstructions}
+                        onChange={(e) => setAccessInstructions(e.target.value)}
+                        placeholder="e.g. Key in 4209, slot is on the left"
+                        className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 4: Pricing & Review */}
+              {currentStep === 4 && (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-bold text-base text-[#f6f2ec]">Hourly Pricing & Earnings</h4>
+                    <p className="text-xs text-[#a89682] mt-0.5">
+                      You set the rate drivers pay per hour. Platform takes a 10% fee.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[#201c18] border border-[#383028] text-center space-y-3">
+                    <span className="text-xs font-bold text-[#a89682] uppercase tracking-wider">
+                      Hourly Rate (INR)
+                    </span>
+                    <div className="flex items-center justify-center gap-1 text-[#f6f2ec]">
+                      <span className="text-2xl font-bold text-[#dfba89]">₹</span>
+                      <input
+                        type="number"
+                        min="20"
+                        max="1000"
+                        step="5"
+                        value={hourlyRate}
+                        onChange={(e) => setHourlyRate(parseInt(e.target.value) || 0)}
+                        className="w-28 text-center text-4xl font-black bg-[#100e0d] text-[#dfba89] rounded-xl border border-[#383028] py-1 focus:ring-2 focus:ring-[#dfba89]/60"
+                      />
+                      <span className="text-sm font-semibold text-[#a89682]">/ hr</span>
+                    </div>
+
+                    <div className="flex justify-center gap-2 pt-1">
+                      {[50, 80, 100, 150, 200].map((rate) => (
+                        <button
+                          key={rate}
+                          type="button"
+                          onClick={() => setHourlyRate(rate)}
+                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                            hourlyRate === rate
+                              ? 'bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] font-bold'
+                              : 'bg-[#100e0d] border border-[#383028] text-[#c2b29d] hover:bg-[#1a1612]'
+                          }`}
+                        >
+                          ₹{rate}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[#201c18] border border-[#383028] space-y-2 text-xs text-[#a89682]">
+                    <div className="flex justify-between">
+                      <span>Driver Hourly Rate</span>
+                      <span className="font-bold text-[#f6f2ec]">₹{hourlyRate}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Platform Commission (10%)</span>
+                      <span className="font-bold text-[#e08272]">-₹{platformFee}</span>
+                    </div>
+                    <hr className="border-[#2c251e] my-1.5" />
+                    <div className="flex justify-between items-baseline text-sm font-black text-[#f6f2ec]">
+                      <span>Your Net Earnings per Hour:</span>
+                      <span className="text-xl text-[#dfba89]">₹{hostNetHourly} / hr</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
           )}
 
-          {currentStep < 4 ? (
-            <button
-              type="button"
-              onClick={handleNextStep}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#dfba89]/20 transition cursor-pointer"
-            >
-              <span>Continue</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={handleSubmit}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs flex items-center gap-2 shadow-lg shadow-[#dfba89]/25 transition cursor-pointer disabled:opacity-50"
-            >
-              <Sparkles className="w-4 h-4 text-[#12100e]" />
-              <span>{isSubmitting ? 'Publishing...' : 'Publish Listing Now'}</span>
-            </button>
-          )}
         </div>
+
+        {/* Footer Navigation (Wizard Mode) */}
+        {mode === 'wizard' && (
+          <div className="p-4 bg-[#141210] border-t border-[#383028] flex items-center justify-between shrink-0">
+            {currentStep > 1 ? (
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                className="px-4 py-2.5 rounded-xl border border-[#383028] hover:bg-[#201c18] text-[#c2b29d] hover:text-[#f6f2ec] font-bold text-xs flex items-center gap-1.5 cursor-pointer transition"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
+              </button>
+            ) : (
+              <div />
+            )}
+
+            {currentStep < 4 ? (
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#dfba89]/20 transition cursor-pointer"
+              >
+                <span>Continue</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs flex items-center gap-2 shadow-lg shadow-[#dfba89]/25 transition cursor-pointer disabled:opacity-50"
+              >
+                <Sparkles className="w-4 h-4 text-[#12100e]" />
+                <span>{isSubmitting ? 'Publishing...' : 'Publish Listing Now'}</span>
+              </button>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
