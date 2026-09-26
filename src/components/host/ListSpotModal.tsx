@@ -46,7 +46,7 @@ const QUICK_PRESETS: QuickPreset[] = [
     spaceType: 'open',
     vehicleSize: 'compact-suv',
     hourlyRate: 60,
-    amenities: ['cctv', 'lighting', 'wide_clearance'],
+    amenities: [],
     dimensions: '5.2m x 2.6m x 2.4m',
     photoUrl: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80',
     description: 'Paved, spacious private residential driveway with direct street access and night lighting.',
@@ -59,7 +59,7 @@ const QUICK_PRESETS: QuickPreset[] = [
     spaceType: 'covered',
     vehicleSize: 'compact-suv',
     hourlyRate: 120,
-    amenities: ['ev_charging', 'cctv', 'lighting', 'gated_access'],
+    amenities: [],
     dimensions: '5.4m x 2.8m x 2.4m',
     photoUrl: 'https://images.unsplash.com/photo-1617886903355-9354752c0fd1?w=800&auto=format&fit=crop&q=80',
     description: 'Covered parking bay equipped with Level 2 EV charger, 24/7 CCTV surveillance and secure access.',
@@ -72,7 +72,7 @@ const QUICK_PRESETS: QuickPreset[] = [
     spaceType: 'covered',
     vehicleSize: 'compact-suv',
     hourlyRate: 80,
-    amenities: ['cctv', 'lighting', 'gated_access', 'guard'],
+    amenities: [],
     dimensions: '5.4m x 2.8m x 2.4m',
     photoUrl: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800&auto=format&fit=crop&q=80',
     description: 'Secure covered garage space protected from sun and rain with security guard on duty.',
@@ -85,7 +85,7 @@ const QUICK_PRESETS: QuickPreset[] = [
     spaceType: 'gated',
     vehicleSize: '2-wheeler',
     hourlyRate: 30,
-    amenities: ['cctv', 'lighting', 'gated_access'],
+    amenities: [],
     dimensions: '2.4m x 1.2m x 2.0m',
     photoUrl: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=800&auto=format&fit=crop&q=80',
     description: 'Safe gated parking space reserved specifically for motorcycles and electric scooters.',
@@ -98,7 +98,7 @@ const QUICK_PRESETS: QuickPreset[] = [
     spaceType: 'underground',
     vehicleSize: 'large-suv',
     hourlyRate: 100,
-    amenities: ['guard', 'cctv', 'gated_access', 'lighting', 'wide_clearance'],
+    amenities: [],
     dimensions: '5.6m x 3.0m x 2.6m',
     photoUrl: 'https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?w=800&auto=format&fit=crop&q=80',
     description: 'Designated visitor parking slot in premium gated apartment complex with 24/7 security.',
@@ -134,7 +134,7 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
   const [spaceType, setSpaceType] = useState<SpaceType>(defaultPreset.spaceType);
   const [vehicleSize, setVehicleSize] = useState<VehicleSize>(defaultPreset.vehicleSize);
   const [dimensions, setDimensions] = useState(defaultPreset.dimensions);
-  const [amenities, setAmenities] = useState<string[]>(defaultPreset.amenities);
+  const [amenities, setAmenities] = useState<string[]>([]);
   const [rules, setRules] = useState<string>('No blocking driveway, Park within marked bay');
   const [gateCode, setGateCode] = useState('');
   const [accessInstructions, setAccessInstructions] = useState('');
