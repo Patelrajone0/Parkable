@@ -7,29 +7,15 @@ import ParkingMap from '@/components/map/ParkingMap';
 import { 
   X, 
   MapPin, 
-  Car, 
-  Check, 
-  Zap, 
-  ShieldCheck, 
   Sparkles, 
-  ArrowRight, 
-  ArrowLeft,
-  Camera,
-  Layers,
-  Key,
-  Info,
-  UploadCloud,
-  ImageIcon,
-  Trash2,
-  Plus,
-  Navigation,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  CheckCircle2,
-  Sliders,
-  Loader2,
-  Compass
+  Camera, 
+  UploadCloud, 
+  Trash2, 
+  Navigation, 
+  ChevronDown, 
+  ChevronUp, 
+  Sliders, 
+  Loader2 
 } from 'lucide-react';
 
 interface ListSpotModalProps {
@@ -129,17 +115,13 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
     setActiveRole 
   } = useApp();
 
-  // Mode: 'express' (1-screen instant listing) or 'wizard' (step-by-step)
-  const [mode, setMode] = useState<'express' | 'wizard'>('express');
+  const defaultPreset = QUICK_PRESETS[0];
   const [selectedPresetId, setSelectedPresetId] = useState<string>('driveway');
   const [showAdvancedOptions, setShowAdvancedOptions] = useState<boolean>(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState<boolean>(false);
-
-  const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Form State
-  const defaultPreset = QUICK_PRESETS[0];
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState(defaultPreset.description);
   const [address, setAddress] = useState('88, 100 Feet Road, Indiranagar');
@@ -162,7 +144,6 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
   // File upload & Camera references
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([defaultPreset.photoUrl]);
 
   // Sync initial GPS location if available
@@ -313,20 +294,6 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
     );
   };
 
-  const handleNextStep = () => {
-    if (currentStep === 1) {
-      if (!address.trim()) {
-        addToast('Address Required', 'Please enter or auto-detect your spot address.', 'error');
-        return;
-      }
-    }
-    setCurrentStep((prev) => Math.min(4, prev + 1));
-  };
-
-  const handlePrevStep = () => {
-    setCurrentStep((prev) => Math.max(1, prev - 1));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -382,7 +349,7 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#dfba89]/20 text-[#dfba89] border border-[#dfba89]/40 flex items-center gap-1">
                 <Sparkles className="w-2.5 h-2.5" />
-                Fast List
+                Express Listing
               </span>
               <span className="text-[#756758]">•</span>
               <span className="text-xs text-[#a89682]">Host Portal</span>
@@ -392,649 +359,306 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
             </h3>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Mode Switcher Pill */}
-            <div className="hidden sm:flex items-center bg-[#1c1814] p-1 rounded-xl border border-[#383028] text-xs">
-              <button
-                type="button"
-                onClick={() => setMode('express')}
-                className={`px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                  mode === 'express'
-                    ? 'bg-[#dfba89] text-[#12100e] shadow-xs'
-                    : 'text-[#a89682] hover:text-[#f6f2ec]'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5" />
-                <span>Express</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('wizard')}
-                className={`px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                  mode === 'wizard'
-                    ? 'bg-[#dfba89] text-[#12100e] shadow-xs'
-                    : 'text-[#a89682] hover:text-[#f6f2ec]'
-                }`}
-              >
-                <Sliders className="w-3.5 h-3.5" />
-                <span>Wizard</span>
-              </button>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-[#1c1814] hover:bg-[#28211a] text-[#f6f2ec] border border-[#383028] flex items-center justify-center transition cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-[#1c1814] hover:bg-[#28211a] text-[#f6f2ec] border border-[#383028] flex items-center justify-center transition cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Wizard Progress Bar (Only in Wizard Mode) */}
-        {mode === 'wizard' && (
-          <div className="w-full bg-[#241f1a] h-1.5 shrink-0">
-            <div
-              className="bg-gradient-to-r from-[#dfba89] to-[#b37d4e] h-full transition-all duration-300"
-              style={{ width: `${(currentStep / 4) * 100}%` }}
-            />
-          </div>
-        )}
-
-        {/* Content Body */}
+        {/* Content Body: Express Method Only */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 text-[#f6f2ec] space-y-5">
-
-          {/* ========================================================= */}
-          {/* MODE: EXPRESS 1-MINUTE LISTING (FASTEST, NO RED TAPE)    */}
-          {/* ========================================================= */}
-          {mode === 'express' && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              
-              {/* Section 1: 1-Click Smart Presets */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-[#dfba89] flex items-center gap-1.5">
-                    <span>1. Select Spot Template</span>
-                    <span className="text-[10px] font-normal text-[#a89682]">(Auto-fills 90% of details)</span>
-                  </label>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {QUICK_PRESETS.map((preset) => {
-                    const isSelected = selectedPresetId === preset.id;
-                    return (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => handleApplyPreset(preset)}
-                        className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden cursor-pointer ${
-                          isSelected
-                            ? 'border-[#dfba89] bg-[#dfba89]/15 shadow-md shadow-[#dfba89]/10 ring-1 ring-[#dfba89]/50'
-                            : 'border-[#383028] bg-[#201c18]/80 hover:bg-[#28211a] hover:border-[#dfba89]/50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-2xl">{preset.icon}</span>
-                          <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
-                            isSelected 
-                              ? 'bg-[#dfba89] text-[#12100e]' 
-                              : 'bg-[#12100e] text-[#a89682] border border-[#383028]'
-                          }`}>
-                            {preset.tag}
-                          </span>
-                        </div>
-                        <div className="font-bold text-xs text-[#f6f2ec] leading-tight">
-                          {preset.name}
-                        </div>
-                        <div className="text-[11px] font-semibold text-[#dfba89] mt-1">
-                          ₹{preset.hourlyRate}<span className="text-[#a89682] font-normal">/hr</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Section 2: Location & Address with 1-Click GPS */}
-              <div className="p-4 rounded-2xl bg-[#1c1814] border border-[#383028] space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-[#dfba89] flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-[#dfba89]" />
-                    <span>2. Spot Location</span>
-                  </label>
-
-                  <button
-                    type="button"
-                    disabled={isDetectingLocation}
-                    onClick={handleDetectLocation}
-                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-50"
-                  >
-                    {isDetectingLocation ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Navigation className="w-3.5 h-3.5 text-[#12100e]" />
-                    )}
-                    <span>{isDetectingLocation ? 'Locating...' : '📍 Auto-Detect GPS'}</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="sm:col-span-2">
-                    <input
-                      type="text"
-                      required
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="e.g. 42, 100 Feet Rd, Indiranagar"
-                      className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="City (e.g. Bengaluru)"
-                      className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                    />
-                  </div>
-                </div>
-
-                {/* Compact Interactive Map Preview */}
-                <div className="h-44 w-full rounded-xl overflow-hidden border border-[#383028] relative shadow-inner">
-                  <ParkingMap
-                    spots={[]}
-                    selectedSpot={null}
-                    onSelectSpot={() => {}}
-                    center={[pinCoords.lat, pinCoords.lng]}
-                    zoom={15}
-                    interactivePinPlacement={true}
-                    onPinPlaced={handlePinPlaced}
-                    pinCoords={pinCoords}
-                  />
-                  <div className="absolute bottom-2 left-2 right-2 bg-[#141210]/90 border border-[#383028] backdrop-blur-md text-[#f6f2ec] text-[10px] py-1 px-2.5 rounded-lg text-center pointer-events-none z-20 flex items-center justify-center gap-1.5 shadow-sm">
-                    <span className="text-[#dfba89]">📍</span>
-                    <span>Click or drag pin to adjust entrance gate</span>
-                    <span className="text-[#756758]">|</span>
-                    <span className="font-mono text-[#dfba89]">{pinCoords.lat.toFixed(4)}, {pinCoords.lng.toFixed(4)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 3: Hourly Pricing & Net Income */}
-              <div className="p-4 rounded-2xl bg-[#1c1814] border border-[#383028] space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-[#dfba89]">
-                    3. Hourly Rate & Earnings
-                  </label>
-                  <span className="text-[11px] font-bold text-[#34d399] bg-[#34d399]/15 px-2 py-0.5 rounded-md border border-[#34d399]/30">
-                    Est. ₹{estimatedMonthly.toLocaleString()}/mo passive
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-bold text-[#dfba89]">₹</span>
-                    <input
-                      type="number"
-                      min="20"
-                      max="1000"
-                      step="5"
-                      value={hourlyRate}
-                      onChange={(e) => setHourlyRate(parseInt(e.target.value) || 0)}
-                      className="w-full pl-8 pr-12 py-2 text-xl font-black bg-[#100e0d] text-[#dfba89] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                    />
-                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#a89682]">/ hr</span>
-                  </div>
-
-                  {/* Fast price chips */}
-                  <div className="flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-                    {[30, 60, 80, 100, 120, 150].map((rate) => (
-                      <button
-                        key={rate}
-                        type="button"
-                        onClick={() => setHourlyRate(rate)}
-                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                          hourlyRate === rate
-                            ? 'bg-[#dfba89] text-[#12100e]'
-                            : 'bg-[#201c18] border border-[#383028] text-[#c2b29d] hover:bg-[#28211a]'
-                        }`}
-                      >
-                        ₹{rate}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Earnings breakdown banner */}
-                <div className="flex items-center justify-between text-[11px] text-[#a89682] pt-1 border-t border-[#2c251e]">
-                  <span>Driver pays: <strong className="text-[#f6f2ec]">₹{hourlyRate}/hr</strong></span>
-                  <span>Platform fee: <span className="text-[#e08272]">10% (₹{platformFee})</span></span>
-                  <span>You take home: <strong className="text-[#34d399] font-bold">₹{hostNetHourly}/hr</strong></span>
-                </div>
-              </div>
-
-              {/* Instant Publish Button (Primary) */}
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleSubmit}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#dfba89]/25 transition cursor-pointer active:scale-[0.99] disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-[#12100e]" />
-                    <span>Publishing Listing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 text-[#12100e]" />
-                    <span>⚡ Publish Spot Now (Instant Live)</span>
-                  </>
-                )}
-              </button>
-
-              {/* Expandable Advanced Options Section */}
-              <div className="border border-[#383028] rounded-2xl bg-[#141210] overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                  className="w-full p-3.5 flex items-center justify-between text-xs font-bold text-[#c2b29d] hover:text-[#dfba89] transition cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <Sliders className="w-3.5 h-3.5 text-[#dfba89]" />
-                    <span>Customize Details (Photos, Gate PIN, Amenities, Rules)</span>
-                  </div>
-                  {showAdvancedOptions ? (
-                    <ChevronUp className="w-4 h-4 text-[#a89682]" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-[#a89682]" />
-                  )}
-                </button>
-
-                {showAdvancedOptions && (
-                  <div className="p-4 border-t border-[#383028] space-y-4 bg-[#100e0d]/50 animate-in fade-in duration-200">
-                    
-                    {/* Custom Title & Description */}
-                    <div className="space-y-2">
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682]">
-                        Spot Title
-                      </label>
-                      <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="e.g. Shaded Driveway with EV Charger near Indiranagar"
-                        className="w-full px-3.5 py-2 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                      />
-                    </div>
-
-                    {/* Space Type & Vehicle Size */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
-                          Space Type
-                        </label>
-                        <select
-                          value={spaceType}
-                          onChange={(e) => setSpaceType(e.target.value as SpaceType)}
-                          className="w-full px-3 py-2 text-xs bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                        >
-                          <option value="open">☀️ Open Driveway</option>
-                          <option value="covered">☔ Covered Roof</option>
-                          <option value="underground">🏢 Underground Bay</option>
-                          <option value="gated">🏡 Gated Villa</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
-                          Max Vehicle Size
-                        </label>
-                        <select
-                          value={vehicleSize}
-                          onChange={(e) => setVehicleSize(e.target.value as VehicleSize)}
-                          className="w-full px-3 py-2 text-xs bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                        >
-                          <option value="2-wheeler">🏍️ 2-Wheeler (Bike / Scooter)</option>
-                          <option value="hatchback">🚗 Hatchback (Compact)</option>
-                          <option value="compact-suv">🚙 Compact SUV (Creta / Nexon)</option>
-                          <option value="large-suv">🚐 Large SUV (Fortuner / Thar)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Gate PIN & Access Instructions */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                          Gate PIN / Keypad Code (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={gateCode}
-                          onChange={(e) => setGateCode(e.target.value)}
-                          placeholder="e.g. 4209 or 'Ask Guard'"
-                          className="w-full px-3.5 py-2 text-xs font-mono font-bold bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                          Access Instructions
-                        </label>
-                        <input
-                          type="text"
-                          value={accessInstructions}
-                          onChange={(e) => setAccessInstructions(e.target.value)}
-                          placeholder="e.g. Bay #4 on the left inside gate"
-                          className="w-full px-3.5 py-2 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Amenities Checklist */}
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
-                        Amenities & Security
-                      </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                        {[
-                          { id: 'cctv', label: '24/7 CCTV', icon: '📹' },
-                          { id: 'ev_charging', label: 'EV Charger', icon: '⚡' },
-                          { id: 'guard', label: 'Security Guard', icon: '👮' },
-                          { id: 'gated_access', label: 'Gated Access', icon: '🔒' },
-                          { id: 'lighting', label: 'Well Lit at Night', icon: '💡' },
-                          { id: 'wide_clearance', label: 'Wide Clearance', icon: '↔️' },
-                        ].map((amenity) => (
-                          <button
-                            key={amenity.id}
-                            type="button"
-                            onClick={() => toggleAmenity(amenity.id)}
-                            className={`p-2 rounded-xl border flex items-center gap-1.5 text-xs transition cursor-pointer ${
-                              amenities.includes(amenity.id)
-                                ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold'
-                                : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
-                            }`}
-                          >
-                            <span>{amenity.icon}</span>
-                            <span className="text-[11px]">{amenity.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Photo Management */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682]">
-                          Parking Photos ({uploadedPhotos.length})
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => cameraInputRef.current?.click()}
-                            className="text-[10px] font-bold text-[#dfba89] hover:underline flex items-center gap-1 cursor-pointer"
-                          >
-                            <Camera className="w-3 h-3" />
-                            Take Photo
-                          </button>
-                          <span className="text-[#383028]">|</span>
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="text-[10px] font-bold text-[#dfba89] hover:underline flex items-center gap-1 cursor-pointer"
-                          >
-                            <UploadCloud className="w-3 h-3" />
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Hidden inputs */}
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleFiles(e.target.files)}
-                        className="hidden"
-                      />
-                      <input
-                        ref={cameraInputRef}
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={(e) => handleFiles(e.target.files)}
-                        className="hidden"
-                      />
-
-                      {/* Preview Thumbnails */}
-                      <div className="grid grid-cols-3 gap-2">
-                        {uploadedPhotos.map((photo, idx) => (
-                          <div
-                            key={idx}
-                            className="relative h-20 rounded-xl overflow-hidden border border-[#383028] bg-[#100e0d] group"
-                          >
-                            <img
-                              src={photo}
-                              alt={`Spot photo ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            {idx === 0 && (
-                              <span className="absolute top-1 left-1 px-1.5 py-0.2 rounded bg-[#dfba89] text-[#12100e] text-[8px] font-black uppercase">
-                                Cover
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePhoto(idx)}
-                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#100e0d]/80 hover:bg-rose-700 text-white flex items-center justify-center transition shadow-sm cursor-pointer"
-                            >
-                              <Trash2 className="w-2.5 h-2.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                  </div>
-                )}
-              </div>
+          
+          {/* Section 1: 1-Click Smart Presets */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-black uppercase tracking-wider text-[#dfba89] flex items-center gap-1.5">
+                <span>1. Select Spot Template</span>
+                <span className="text-[10px] font-normal text-[#a89682]">(Auto-fills 90% of details)</span>
+              </label>
             </div>
-          )}
 
-          {/* ========================================================= */}
-          {/* MODE: STEP-BY-STEP WIZARD (OPTIONAL DETAILED WALKTHROUGH)  */}
-          {/* ========================================================= */}
-          {mode === 'wizard' && (
-            <div className="space-y-4 animate-in fade-in duration-200">
-              
-              {/* Quick Preset Selector also in Step 1 */}
-              {currentStep === 1 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-bold text-base text-[#f6f2ec]">Spot Location & Address</h4>
-                      <p className="text-xs text-[#a89682] mt-0.5">
-                        Pinpoint the exact location on the map so drivers can navigate seamlessly.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={isDetectingLocation}
-                      onClick={handleDetectLocation}
-                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-                    >
-                      <Navigation className="w-3.5 h-3.5 text-[#12100e]" />
-                      <span>{isDetectingLocation ? 'Locating...' : '📍 Auto-Detect GPS'}</span>
-                    </button>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                      Spot Title *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g. Shaded Driveway with EV Charger near Indiranagar Metro"
-                      className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                        Street Address *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        placeholder="e.g. 42, 12th Main Rd, HAL 2nd Stage"
-                        className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="e.g. Bengaluru"
-                        className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Interactive Pin Placement Map */}
-                  <div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {QUICK_PRESETS.map((preset) => {
+                const isSelected = selectedPresetId === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => handleApplyPreset(preset)}
+                    className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden cursor-pointer ${
+                      isSelected
+                        ? 'border-[#dfba89] bg-[#dfba89]/15 shadow-md shadow-[#dfba89]/10 ring-1 ring-[#dfba89]/50'
+                        : 'border-[#383028] bg-[#201c18]/80 hover:bg-[#28211a] hover:border-[#dfba89]/50'
+                    }`}
+                  >
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-bold uppercase tracking-wider text-[#a89682]">
-                        Click Map to Place Pin:
-                      </label>
-                      <span className="text-[11px] font-mono text-[#dfba89] font-semibold">
-                        {pinCoords.lat.toFixed(4)}, {pinCoords.lng.toFixed(4)}
+                      <span className="text-2xl">{preset.icon}</span>
+                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                        isSelected 
+                          ? 'bg-[#dfba89] text-[#12100e]' 
+                          : 'bg-[#12100e] text-[#a89682] border border-[#383028]'
+                      }`}>
+                        {preset.tag}
                       </span>
                     </div>
-                    <div className="h-52 w-full rounded-2xl overflow-hidden border border-[#383028] relative shadow-inner">
-                      <ParkingMap
-                        spots={[]}
-                        selectedSpot={null}
-                        onSelectSpot={() => {}}
-                        center={[pinCoords.lat, pinCoords.lng]}
-                        zoom={15}
-                        interactivePinPlacement={true}
-                        onPinPlaced={handlePinPlaced}
-                        pinCoords={pinCoords}
-                      />
-                      <div className="absolute bottom-2 left-2 right-2 bg-[#141210]/90 border border-[#383028] backdrop-blur-md text-[#f6f2ec] text-[11px] p-2 rounded-xl text-center pointer-events-none z-20">
-                        📍 Click anywhere on the map or drag the gold pin to set the entry gate
-                      </div>
+                    <div className="font-bold text-xs text-[#f6f2ec] leading-tight">
+                      {preset.name}
                     </div>
-                  </div>
-                </div>
+                    <div className="text-[11px] font-semibold text-[#dfba89] mt-1">
+                      ₹{preset.hourlyRate}<span className="text-[#a89682] font-normal">/hr</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 2: Location & Address with 1-Click GPS */}
+          <div className="p-4 rounded-2xl bg-[#1c1814] border border-[#383028] space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black uppercase tracking-wider text-[#dfba89] flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#dfba89]" />
+                <span>2. Spot Location</span>
+              </label>
+
+              <button
+                type="button"
+                disabled={isDetectingLocation}
+                onClick={handleDetectLocation}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-50"
+              >
+                {isDetectingLocation ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Navigation className="w-3.5 h-3.5 text-[#12100e]" />
+                )}
+                <span>{isDetectingLocation ? 'Locating...' : '📍 Auto-Detect GPS'}</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="sm:col-span-2">
+                <input
+                  type="text"
+                  required
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="e.g. 42, 100 Feet Rd, Indiranagar"
+                  className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City (e.g. Bengaluru)"
+                  className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                />
+              </div>
+            </div>
+
+            {/* Compact Interactive Map Preview */}
+            <div className="h-44 w-full rounded-xl overflow-hidden border border-[#383028] relative shadow-inner">
+              <ParkingMap
+                spots={[]}
+                selectedSpot={null}
+                onSelectSpot={() => {}}
+                center={[pinCoords.lat, pinCoords.lng]}
+                zoom={15}
+                interactivePinPlacement={true}
+                onPinPlaced={handlePinPlaced}
+                pinCoords={pinCoords}
+              />
+              <div className="absolute bottom-2 left-2 right-2 bg-[#141210]/90 border border-[#383028] backdrop-blur-md text-[#f6f2ec] text-[10px] py-1 px-2.5 rounded-lg text-center pointer-events-none z-20 flex items-center justify-center gap-1.5 shadow-sm">
+                <span className="text-[#dfba89]">📍</span>
+                <span>Click or drag pin to adjust entrance gate</span>
+                <span className="text-[#756758]">|</span>
+                <span className="font-mono text-[#dfba89]">{pinCoords.lat.toFixed(4)}, {pinCoords.lng.toFixed(4)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Hourly Pricing & Net Income */}
+          <div className="p-4 rounded-2xl bg-[#1c1814] border border-[#383028] space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black uppercase tracking-wider text-[#dfba89]">
+                3. Hourly Rate & Earnings
+              </label>
+              <span className="text-[11px] font-bold text-[#34d399] bg-[#34d399]/15 px-2 py-0.5 rounded-md border border-[#34d399]/30">
+                Est. ₹{estimatedMonthly.toLocaleString()}/mo passive
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-bold text-[#dfba89]">₹</span>
+                <input
+                  type="number"
+                  min="20"
+                  max="1000"
+                  step="5"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(parseInt(e.target.value) || 0)}
+                  className="w-full pl-8 pr-12 py-2 text-xl font-black bg-[#100e0d] text-[#dfba89] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                />
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#a89682]">/ hr</span>
+              </div>
+
+              {/* Fast price chips */}
+              <div className="flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                {[30, 60, 80, 100, 120, 150].map((rate) => (
+                  <button
+                    key={rate}
+                    type="button"
+                    onClick={() => setHourlyRate(rate)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      hourlyRate === rate
+                        ? 'bg-[#dfba89] text-[#12100e]'
+                        : 'bg-[#201c18] border border-[#383028] text-[#c2b29d] hover:bg-[#28211a]'
+                    }`}
+                  >
+                    ₹{rate}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Earnings breakdown banner */}
+            <div className="flex items-center justify-between text-[11px] text-[#a89682] pt-1 border-t border-[#2c251e]">
+              <span>Driver pays: <strong className="text-[#f6f2ec]">₹{hourlyRate}/hr</strong></span>
+              <span>Platform fee: <span className="text-[#e08272]">10% (₹{platformFee})</span></span>
+              <span>You take home: <strong className="text-[#34d399] font-bold">₹{hostNetHourly}/hr</strong></span>
+            </div>
+          </div>
+
+          {/* Instant Publish Button (Primary) */}
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={handleSubmit}
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#dfba89]/25 transition cursor-pointer active:scale-[0.99] disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-[#12100e]" />
+                <span>Publishing Listing...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 text-[#12100e]" />
+                <span>⚡ Publish Spot Now (Instant Live)</span>
+              </>
+            )}
+          </button>
+
+          {/* Expandable Advanced Options Section */}
+          <div className="border border-[#383028] rounded-2xl bg-[#141210] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+              className="w-full p-3.5 flex items-center justify-between text-xs font-bold text-[#c2b29d] hover:text-[#dfba89] transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Sliders className="w-3.5 h-3.5 text-[#dfba89]" />
+                <span>Customize Details (Photos, Gate PIN, Amenities, Rules)</span>
+              </div>
+              {showAdvancedOptions ? (
+                <ChevronUp className="w-4 h-4 text-[#a89682]" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-[#a89682]" />
               )}
+            </button>
 
-              {/* STEP 2: Space Type & Vehicle Capacity */}
-              {currentStep === 2 && (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-bold text-base text-[#f6f2ec]">Space Details & Compatibility</h4>
-                    <p className="text-xs text-[#a89682] mt-0.5">
-                      Specify space configuration so drivers know if their vehicle fits.
-                    </p>
-                  </div>
+            {showAdvancedOptions && (
+              <div className="p-4 border-t border-[#383028] space-y-4 bg-[#100e0d]/50 animate-in fade-in duration-200">
+                
+                {/* Custom Title & Description */}
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682]">
+                    Spot Title
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Shaded Driveway with EV Charger near Indiranagar"
+                    className="w-full px-3.5 py-2 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                  />
+                </div>
 
+                {/* Space Type & Vehicle Size */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-2">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
                       Space Type
                     </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {[
-                        { id: 'covered', label: 'Covered Roof', icon: '☔' },
-                        { id: 'open', label: 'Open Driveway', icon: '☀️' },
-                        { id: 'underground', label: 'Underground', icon: '🏢' },
-                        { id: 'gated', label: 'Gated Villa', icon: '🏡' },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setSpaceType(item.id as SpaceType)}
-                          className={`p-3 rounded-xl border text-center transition cursor-pointer ${
-                            spaceType === item.id
-                              ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold shadow-xs'
-                              : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
-                          }`}
-                        >
-                          <div className="text-xl mb-1">{item.icon}</div>
-                          <div className="text-xs">{item.label}</div>
-                        </button>
-                      ))}
-                    </div>
+                    <select
+                      value={spaceType}
+                      onChange={(e) => setSpaceType(e.target.value as SpaceType)}
+                      className="w-full px-3 py-2 text-xs bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                    >
+                      <option value="open">☀️ Open Driveway</option>
+                      <option value="covered">☔ Covered Roof</option>
+                      <option value="underground">🏢 Underground Bay</option>
+                      <option value="gated">🏡 Gated Villa</option>
+                    </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-2">
-                      Maximum Vehicle Size
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
+                      Max Vehicle Size
                     </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {[
-                        { id: '2-wheeler', label: '2-Wheeler (Bike / Scooter)', desc: 'Fits motorcycles, scooters & EV 2W' },
-                        { id: 'hatchback', label: 'Hatchback (Compact)', desc: 'Fits Swift, i20, Polo, Tiago' },
-                        { id: 'compact-suv', label: 'Compact SUV (Creta / Seltos)', desc: 'Fits Hyundai Creta, Brezza, Nexon, Kia' },
-                        { id: 'large-suv', label: 'Large SUV / Truck (Fortuner)', desc: 'Fits Fortuner, Endeavour, Thar, Safari' },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setVehicleSize(item.id as VehicleSize)}
-                          className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                            vehicleSize === item.id
-                              ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold shadow-xs'
-                              : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
-                          }`}
-                        >
-                          <div className="text-xs font-bold">{item.label}</div>
-                          <div className="text-[11px] text-[#a89682] mt-0.5 font-normal">{item.desc}</div>
-                        </button>
-                      ))}
-                    </div>
+                    <select
+                      value={vehicleSize}
+                      onChange={(e) => setVehicleSize(e.target.value as VehicleSize)}
+                      className="w-full px-3 py-2 text-xs bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                    >
+                      <option value="2-wheeler">🏍️ 2-Wheeler (Bike / Scooter)</option>
+                      <option value="hatchback">🚗 Hatchback (Compact)</option>
+                      <option value="compact-suv">🚙 Compact SUV (Creta / Nexon)</option>
+                      <option value="large-suv">🚐 Large SUV (Fortuner / Thar)</option>
+                    </select>
                   </div>
+                </div>
 
+                {/* Gate PIN & Access Instructions */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                      Dimensions (L x W x H)
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                      Gate PIN / Keypad Code (Optional)
                     </label>
                     <input
                       type="text"
-                      value={dimensions}
-                      onChange={(e) => setDimensions(e.target.value)}
-                      placeholder="e.g. 5.4m x 2.8m x 2.4m"
-                      className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                      value={gateCode}
+                      onChange={(e) => setGateCode(e.target.value)}
+                      placeholder="e.g. 4209 or 'Ask Guard'"
+                      className="w-full px-3.5 py-2 text-xs font-mono font-bold bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                      Access Instructions
+                    </label>
+                    <input
+                      type="text"
+                      value={accessInstructions}
+                      onChange={(e) => setAccessInstructions(e.target.value)}
+                      placeholder="e.g. Bay #4 on the left inside gate"
+                      className="w-full px-3.5 py-2 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
                     />
                   </div>
                 </div>
-              )}
 
-              {/* STEP 3: Amenities & Photos */}
-              {currentStep === 3 && (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-bold text-base text-[#f6f2ec]">Amenities, Access & Photos</h4>
-                    <p className="text-xs text-[#a89682] mt-0.5">
-                      High-value amenities like EV charging and CCTV help spots earn up to 40% more.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {/* Amenities Checklist */}
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
+                    Amenities & Security
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                     {[
                       { id: 'cctv', label: '24/7 CCTV', icon: '📹' },
                       { id: 'ev_charging', label: 'EV Charger', icon: '⚡' },
@@ -1047,155 +671,98 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
                         key={amenity.id}
                         type="button"
                         onClick={() => toggleAmenity(amenity.id)}
-                        className={`p-2.5 rounded-xl border flex items-center gap-2 text-xs transition cursor-pointer ${
+                        className={`p-2 rounded-xl border flex items-center gap-1.5 text-xs transition cursor-pointer ${
                           amenities.includes(amenity.id)
                             ? 'border-[#dfba89] bg-[#dfba89]/15 text-[#dfba89] font-bold'
                             : 'border-[#383028] bg-[#201c18] text-[#c2b29d] hover:bg-[#28211a]'
                         }`}
                       >
-                        <span className="text-base">{amenity.icon}</span>
-                        <span>{amenity.label}</span>
+                        <span>{amenity.icon}</span>
+                        <span className="text-[11px]">{amenity.label}</span>
                       </button>
                     ))}
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                        Gate Code / Keypad PIN
-                      </label>
-                      <input
-                        type="text"
-                        value={gateCode}
-                        onChange={(e) => setGateCode(e.target.value)}
-                        placeholder="e.g. 4209 or 'Ask Guard'"
-                        className="w-full px-3.5 py-2.5 text-xs font-mono font-bold bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                        Access Instructions
-                      </label>
-                      <input
-                        type="text"
-                        value={accessInstructions}
-                        onChange={(e) => setAccessInstructions(e.target.value)}
-                        placeholder="e.g. Key in 4209, slot is on the left"
-                        className="w-full px-3.5 py-2.5 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                      />
-                    </div>
-                  </div>
                 </div>
-              )}
 
-              {/* STEP 4: Pricing & Review */}
-              {currentStep === 4 && (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-bold text-base text-[#f6f2ec]">Hourly Pricing & Earnings</h4>
-                    <p className="text-xs text-[#a89682] mt-0.5">
-                      You set the rate drivers pay per hour. Platform takes a 10% fee.
-                    </p>
+                {/* Photo Management */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682]">
+                      Parking Photos ({uploadedPhotos.length})
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => cameraInputRef.current?.click()}
+                        className="text-[10px] font-bold text-[#dfba89] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Camera className="w-3 h-3" />
+                        Take Photo
+                      </button>
+                      <span className="text-[#383028]">|</span>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-[10px] font-bold text-[#dfba89] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <UploadCloud className="w-3 h-3" />
+                        Upload
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[#201c18] border border-[#383028] text-center space-y-3">
-                    <span className="text-xs font-bold text-[#a89682] uppercase tracking-wider">
-                      Hourly Rate (INR)
-                    </span>
-                    <div className="flex items-center justify-center gap-1 text-[#f6f2ec]">
-                      <span className="text-2xl font-bold text-[#dfba89]">₹</span>
-                      <input
-                        type="number"
-                        min="20"
-                        max="1000"
-                        step="5"
-                        value={hourlyRate}
-                        onChange={(e) => setHourlyRate(parseInt(e.target.value) || 0)}
-                        className="w-28 text-center text-4xl font-black bg-[#100e0d] text-[#dfba89] rounded-xl border border-[#383028] py-1 focus:ring-2 focus:ring-[#dfba89]/60"
-                      />
-                      <span className="text-sm font-semibold text-[#a89682]">/ hr</span>
-                    </div>
+                  {/* Hidden inputs */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleFiles(e.target.files)}
+                    className="hidden"
+                  />
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => handleFiles(e.target.files)}
+                    className="hidden"
+                  />
 
-                    <div className="flex justify-center gap-2 pt-1">
-                      {[50, 80, 100, 150, 200].map((rate) => (
+                  {/* Preview Thumbnails */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {uploadedPhotos.map((photo, idx) => (
+                      <div
+                        key={idx}
+                        className="relative h-20 rounded-xl overflow-hidden border border-[#383028] bg-[#100e0d] group"
+                      >
+                        <img
+                          src={photo}
+                          alt={`Spot photo ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {idx === 0 && (
+                          <span className="absolute top-1 left-1 px-1.5 py-0.2 rounded bg-[#dfba89] text-[#12100e] text-[8px] font-black uppercase">
+                            Cover
+                          </span>
+                        )}
                         <button
-                          key={rate}
                           type="button"
-                          onClick={() => setHourlyRate(rate)}
-                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                            hourlyRate === rate
-                              ? 'bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] font-bold'
-                              : 'bg-[#100e0d] border border-[#383028] text-[#c2b29d] hover:bg-[#1a1612]'
-                          }`}
+                          onClick={() => handleRemovePhoto(idx)}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#100e0d]/80 hover:bg-rose-700 text-white flex items-center justify-center transition shadow-sm cursor-pointer"
                         >
-                          ₹{rate}
+                          <Trash2 className="w-2.5 h-2.5" />
                         </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-[#201c18] border border-[#383028] space-y-2 text-xs text-[#a89682]">
-                    <div className="flex justify-between">
-                      <span>Driver Hourly Rate</span>
-                      <span className="font-bold text-[#f6f2ec]">₹{hourlyRate}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Platform Commission (10%)</span>
-                      <span className="font-bold text-[#e08272]">-₹{platformFee}</span>
-                    </div>
-                    <hr className="border-[#2c251e] my-1.5" />
-                    <div className="flex justify-between items-baseline text-sm font-black text-[#f6f2ec]">
-                      <span>Your Net Earnings per Hour:</span>
-                      <span className="text-xl text-[#dfba89]">₹{hostNetHourly} / hr</span>
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              )}
 
-            </div>
-          )}
-
-        </div>
-
-        {/* Footer Navigation (Wizard Mode) */}
-        {mode === 'wizard' && (
-          <div className="p-4 bg-[#141210] border-t border-[#383028] flex items-center justify-between shrink-0">
-            {currentStep > 1 ? (
-              <button
-                type="button"
-                onClick={handlePrevStep}
-                className="px-4 py-2.5 rounded-xl border border-[#383028] hover:bg-[#201c18] text-[#c2b29d] hover:text-[#f6f2ec] font-bold text-xs flex items-center gap-1.5 cursor-pointer transition"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back</span>
-              </button>
-            ) : (
-              <div />
-            )}
-
-            {currentStep < 4 ? (
-              <button
-                type="button"
-                onClick={handleNextStep}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#dfba89]/20 transition cursor-pointer"
-              >
-                <span>Continue</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleSubmit}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs flex items-center gap-2 shadow-lg shadow-[#dfba89]/25 transition cursor-pointer disabled:opacity-50"
-              >
-                <Sparkles className="w-4 h-4 text-[#12100e]" />
-                <span>{isSubmitting ? 'Publishing...' : 'Publish Listing Now'}</span>
-              </button>
+              </div>
             )}
           </div>
-        )}
+
+        </div>
 
       </div>
     </div>
