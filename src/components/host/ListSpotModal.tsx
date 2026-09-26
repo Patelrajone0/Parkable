@@ -136,7 +136,6 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
   const [dimensions, setDimensions] = useState(defaultPreset.dimensions);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [rules, setRules] = useState<string>('No blocking driveway, Park within marked bay');
-  const [gateCode, setGateCode] = useState('');
   const [accessInstructions, setAccessInstructions] = useState('');
   const [hourlyRate, setHourlyRate] = useState<number>(defaultPreset.hourlyRate);
   const [isActive, setIsActive] = useState<boolean>(true);
@@ -305,7 +304,6 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
         photos: uploadedPhotos,
         is_active: isActive,
         instant_book: true,
-        gate_code: gateCode,
         access_instructions: accessInstructions,
       });
 
@@ -550,7 +548,7 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
             >
               <div className="flex items-center gap-2">
                 <Sliders className="w-3.5 h-3.5 text-[#dfba89]" />
-                <span>Customize Details (Photos, Gate PIN, Amenities, Rules)</span>
+                <span>Customize Details (Photos, Access, Amenities, Rules)</span>
               </div>
               {showAdvancedOptions ? (
                 <ChevronUp className="w-4 h-4 text-[#a89682]" />
@@ -611,33 +609,18 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
                   </div>
                 </div>
 
-                {/* Gate PIN & Access Instructions */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                      Gate PIN / Keypad Code (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={gateCode}
-                      onChange={(e) => setGateCode(e.target.value)}
-                      placeholder="e.g. 4209 or 'Ask Guard'"
-                      className="w-full px-3.5 py-2 text-xs font-mono font-bold bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
-                      Access Instructions
-                    </label>
-                    <input
-                      type="text"
-                      value={accessInstructions}
-                      onChange={(e) => setAccessInstructions(e.target.value)}
-                      placeholder="e.g. Bay #4 on the left inside gate"
-                      className="w-full px-3.5 py-2 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
-                    />
-                  </div>
+                {/* Access Instructions */}
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                    Access Instructions (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={accessInstructions}
+                    onChange={(e) => setAccessInstructions(e.target.value)}
+                    placeholder="e.g. Bay #4 on the left inside gate or Ask Guard"
+                    className="w-full px-3.5 py-2 text-xs font-medium bg-[#100e0d] text-[#f6f2ec] placeholder-[#756758] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                  />
                 </div>
 
                 {/* Amenities Checklist */}
