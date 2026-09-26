@@ -64,6 +64,9 @@ interface AppContextType {
   setIsListSpotOpen: (open: boolean) => void;
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
+  isSignOutModalOpen: boolean;
+  setIsSignOutModalOpen: (open: boolean) => void;
+  requestSignOut: () => void;
   checkoutSpot: ParkingSpot | null;
   openCheckout: (spot: ParkingSpot) => void;
 
@@ -120,6 +123,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isListSpotOpen, setIsListSpotOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [platformCommissionRate, setPlatformCommissionRate] = useState<number>(0.10);
 
@@ -334,12 +338,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = () => {
     setCurrentUser(null);
     setIsAuthenticated(false);
+    setIsSignOutModalOpen(false);
     try {
       localStorage.removeItem(STORAGE_KEY_USER);
       localStorage.removeItem(STORAGE_KEY_AUTH);
       sessionStorage.removeItem('parkable_admin_auth');
     } catch {}
     addToast('Signed Out', 'You have been logged out of your session.', 'info');
+  };
+
+  const requestSignOut = () => {
+    setIsSignOutModalOpen(true);
   };
 
   const switchDemoUser = (userId: string) => {
@@ -697,6 +706,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsListSpotOpen,
         isAuthModalOpen,
         setIsAuthModalOpen,
+        isSignOutModalOpen,
+        setIsSignOutModalOpen,
+        requestSignOut,
         checkoutSpot,
         openCheckout,
 

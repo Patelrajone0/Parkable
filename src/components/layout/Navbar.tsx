@@ -36,14 +36,14 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
     activeDriverBooking,
     setIsListSpotOpen,
     setIsAuthModalOpen,
+    requestSignOut,
   } = useApp();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    logout();
     setIsUserMenuOpen(false);
-    router.push('/login');
+    requestSignOut();
   };
 
   const handleBrandClick = () => {

@@ -30,6 +30,7 @@ export default function LoginPage() {
     isLoadingAuth, 
     login, 
     logout, 
+    requestSignOut,
     addToast 
   } = useApp();
 
@@ -294,7 +295,7 @@ export default function LoginPage() {
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={logout}
+                  onClick={requestSignOut}
                   className="w-full bg-[#141210] hover:bg-[#201b16] text-[#c2b29d] font-semibold py-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-[#383028] cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
