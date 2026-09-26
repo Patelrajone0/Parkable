@@ -583,7 +583,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       spot_id: data.spot.id,
       spot_title: data.spot.title,
       spot_address: data.spot.address,
-      spot_image: data.spot.photos[0],
+      spot_image: data.spot.photos && data.spot.photos.length > 0 ? data.spot.photos[0] : undefined,
       spot_lat: data.spot.lat,
       spot_lng: data.spot.lng,
       start_time: data.startTime.toISOString(),

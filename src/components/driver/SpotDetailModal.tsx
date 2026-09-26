@@ -56,16 +56,26 @@ export default function SpotDetailModal({
         className="relative w-full max-w-2xl bg-[#181512] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-[#383028] max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header Photo Carousel */}
-        <div className="relative w-full h-56 sm:h-72 bg-[#100e0d] shrink-0">
-          <img
-            src={spot.photos[activePhotoIdx] || spot.photos[0]}
-            alt={spot.title}
-            className="w-full h-full object-cover"
-          />
-
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#181512] via-transparent to-black/60" />
+        {/* Header Photo or Placeholder Banner */}
+        <div className="relative w-full h-52 sm:h-64 bg-gradient-to-br from-[#241f1a] to-[#100e0d] shrink-0 flex items-center justify-center overflow-hidden">
+          {spot.photos && spot.photos.length > 0 ? (
+            <>
+              <img
+                src={spot.photos[activePhotoIdx] || spot.photos[0]}
+                alt={spot.title}
+                className="w-full h-full object-cover"
+              />
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#181512] via-transparent to-black/60" />
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center p-6 select-none">
+              <div className="w-16 h-16 rounded-2xl bg-[#1c1815] border border-[#383028] flex items-center justify-center text-[#dfba89] shadow-xl mb-2">
+                <Car className="w-8 h-8" />
+              </div>
+              <p className="text-xs text-[#a89682] font-medium">Private Parking Space • No photos uploaded</p>
+            </div>
+          )}
 
           {/* Close button */}
           <button
@@ -77,7 +87,7 @@ export default function SpotDetailModal({
           </button>
 
           {/* Photo indicator dots */}
-          {spot.photos.length > 1 && (
+          {spot.photos && spot.photos.length > 1 && (
             <div className="absolute bottom-3 right-4 flex items-center gap-1.5 z-10 bg-[#141210]/80 border border-[#383028] backdrop-blur-sm px-2.5 py-1 rounded-full text-white text-[11px] font-medium">
               <Camera className="w-3 h-3 text-[#dfba89]" />
               <span>{activePhotoIdx + 1} / {spot.photos.length}</span>
@@ -85,7 +95,7 @@ export default function SpotDetailModal({
           )}
 
           {/* Photo thumbnail strip if multiple */}
-          {spot.photos.length > 1 && (
+          {spot.photos && spot.photos.length > 1 && (
             <div className="absolute bottom-3 left-4 flex gap-1.5 z-10">
               {spot.photos.map((photo, idx) => (
                 <button

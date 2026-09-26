@@ -223,12 +223,21 @@ export default function HostDashboard() {
                   className="bg-[#181512] rounded-2xl border border-[#383028] shadow-lg shadow-black/40 hover:border-[#dfba89]/50 transition overflow-hidden flex flex-col"
                 >
                   {/* Photo & Availability badge */}
-                  <div className="relative h-44 w-full bg-[#100e0d]">
-                    <img
-                      src={spot.photos[0]}
-                      alt={spot.title}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative h-44 w-full bg-[#100e0d] flex items-center justify-center">
+                    {spot.photos && spot.photos.length > 0 ? (
+                      <img
+                        src={spot.photos[0]}
+                        alt={spot.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1c1815] to-[#100e0d]">
+                        <div className="w-12 h-12 rounded-2xl bg-[#241f1a] border border-[#383028] flex items-center justify-center text-[#dfba89] shadow-inner mb-1.5">
+                          <Car className="w-6 h-6" />
+                        </div>
+                        <span className="text-[11px] font-semibold text-[#a89682]">No Photo Uploaded</span>
+                      </div>
+                    )}
                     <div className="absolute top-3 left-3 flex gap-2">
                       <span
                         className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${

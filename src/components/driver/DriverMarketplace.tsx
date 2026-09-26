@@ -96,11 +96,17 @@ export default function DriverMarketplace({
             {selectedSpot && (
               <div className="absolute bottom-3 left-3 right-3 z-20 bg-[#181512]/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-[#383028] animate-in slide-in-from-bottom duration-200">
                 <div className="flex items-start gap-2.5">
-                  <img
-                    src={selectedSpot.photos[0]}
-                    alt=""
-                    className="w-14 h-14 rounded-xl object-cover shrink-0 border border-[#383028]"
-                  />
+                  {selectedSpot.photos && selectedSpot.photos.length > 0 ? (
+                    <img
+                      src={selectedSpot.photos[0]}
+                      alt=""
+                      className="w-14 h-14 rounded-xl object-cover shrink-0 border border-[#383028]"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-xl shrink-0 border border-[#383028] bg-[#100e0d] flex items-center justify-center text-[#dfba89]">
+                      <Car className="w-6 h-6 opacity-80" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <h5 className="font-bold text-xs text-[#f6f2ec] truncate">
                       {selectedSpot.title}
@@ -220,13 +226,22 @@ export default function DriverMarketplace({
                         : 'border-[#383028] hover:border-[#dfba89]/50'
                     }`}
                   >
-                    {/* Spot Card Image */}
-                    <div className="relative aspect-[16/10] w-full bg-[#100e0d] overflow-hidden">
-                      <img
-                        src={spot.photos[0]}
-                        alt={spot.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                    {/* Spot Card Image or Placeholder */}
+                    <div className="relative aspect-[16/10] w-full bg-[#100e0d] overflow-hidden flex items-center justify-center">
+                      {spot.photos && spot.photos.length > 0 ? (
+                        <img
+                          src={spot.photos[0]}
+                          alt={spot.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1c1815] to-[#100e0d] border-b border-[#2d2620]">
+                          <div className="w-12 h-12 rounded-2xl bg-[#241f1a] border border-[#383028] flex items-center justify-center text-[#dfba89] shadow-inner mb-1.5">
+                            <Car className="w-6 h-6" />
+                          </div>
+                          <span className="text-[11px] font-semibold text-[#a89682]">Verified Space</span>
+                        </div>
+                      )}
                       
                       {/* Top Badges */}
                       <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">

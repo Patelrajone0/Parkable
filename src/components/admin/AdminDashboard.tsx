@@ -15,7 +15,8 @@ import {
   Power,
   Trash2,
   Lock,
-  Search
+  Search,
+  Car
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -192,11 +193,17 @@ export default function AdminDashboard() {
                 key={spot.id}
                 className="p-3 rounded-2xl bg-[#201c18] border border-[#2c251e] flex items-center justify-between gap-3 text-xs"
               >
-                <img
-                  src={spot.photos[0]}
-                  alt=""
-                  className="w-12 h-12 rounded-xl object-cover shrink-0 border border-[#383028]"
-                />
+                {spot.photos && spot.photos.length > 0 ? (
+                  <img
+                    src={spot.photos[0]}
+                    alt=""
+                    className="w-12 h-12 rounded-xl object-cover shrink-0 border border-[#383028]"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl shrink-0 border border-[#383028] bg-[#100e0d] flex items-center justify-center text-[#dfba89]">
+                    <Car className="w-5 h-5 opacity-80" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-[#f6f2ec] truncate">{spot.title}</div>
                   <div className="text-[11px] text-[#a89682] truncate">{spot.address}</div>

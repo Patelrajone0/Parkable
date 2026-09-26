@@ -236,11 +236,17 @@ export default function CheckoutModal({
           <form onSubmit={handlePayAndConfirm} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           {/* Spot Summary Mini Card */}
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#201c18] border border-[#383028]">
-            <img
-              src={spot.photos[0]}
-              alt={spot.title}
-              className="w-16 h-16 rounded-xl object-cover shrink-0 border border-[#383028]"
-            />
+            {spot.photos && spot.photos.length > 0 ? (
+              <img
+                src={spot.photos[0]}
+                alt={spot.title}
+                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-[#383028]"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-xl shrink-0 border border-[#383028] bg-[#100e0d] flex items-center justify-center text-[#dfba89]">
+                <Car className="w-7 h-7 opacity-80" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <h4 className="font-bold text-xs sm:text-sm text-[#f6f2ec] truncate">
                 {spot.title}

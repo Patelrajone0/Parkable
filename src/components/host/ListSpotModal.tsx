@@ -144,7 +144,7 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
   // File upload & Camera references
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([defaultPreset.photoUrl]);
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
 
   // Sync initial GPS location if available
   useEffect(() => {
@@ -164,7 +164,6 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
     setAmenities(preset.amenities);
     setDimensions(preset.dimensions);
     setDescription(preset.description);
-    setUploadedPhotos([preset.photoUrl]);
 
     // Update title smartly
     const roadSummary = address ? address.split(',')[0] : 'Indiranagar';
@@ -264,12 +263,7 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
       reader.onload = (e) => {
         if (e.target?.result) {
           const resultStr = e.target.result as string;
-          setUploadedPhotos((prev) => {
-            if (prev.length === 1 && prev[0].includes('unsplash.com')) {
-              return [resultStr];
-            }
-            return [...prev, resultStr];
-          });
+          setUploadedPhotos((prev) => [...prev, resultStr]);
           addToast('Photo Uploaded', `Added "${file.name}" to parking photos`, 'success');
         }
       };
@@ -278,14 +272,7 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
   };
 
   const handleRemovePhoto = (index: number) => {
-    setUploadedPhotos((prev) => {
-      const updated = prev.filter((_, i) => i !== index);
-      if (updated.length === 0) {
-        const curPreset = QUICK_PRESETS.find(p => p.id === selectedPresetId) || defaultPreset;
-        return [curPreset.photoUrl];
-      }
-      return updated;
-    });
+    setUploadedPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
   const toggleAmenity = (id: string) => {
@@ -315,7 +302,7 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
         amenities,
         rules: rules ? rules.split(',').map((r: string) => r.trim()).filter(Boolean) : ['No blocking exit'],
         dimensions,
-        photos: uploadedPhotos.length > 0 ? uploadedPhotos : [activePreset.photoUrl],
+        photos: uploadedPhotos,
         is_active: isActive,
         instant_book: true,
         gate_code: gateCode,
@@ -729,33 +716,39 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
                     className="hidden"
                   />
 
-                  {/* Preview Thumbnails */}
-                  <div className="grid grid-cols-3 gap-2">
-                    {uploadedPhotos.map((photo, idx) => (
-                      <div
-                        key={idx}
-                        className="relative h-20 rounded-xl overflow-hidden border border-[#383028] bg-[#100e0d] group"
-                      >
-                        <img
-                          src={photo}
-                          alt={`Spot photo ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        {idx === 0 && (
-                          <span className="absolute top-1 left-1 px-1.5 py-0.2 rounded bg-[#dfba89] text-[#12100e] text-[8px] font-black uppercase">
-                            Cover
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePhoto(idx)}
-                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#100e0d]/80 hover:bg-rose-700 text-white flex items-center justify-center transition shadow-sm cursor-pointer"
+                  {/* Preview Thumbnails or Empty State */}
+                  {uploadedPhotos.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {uploadedPhotos.map((photo, idx) => (
+                        <div
+                          key={idx}
+                          className="relative h-20 rounded-xl overflow-hidden border border-[#383028] bg-[#100e0d] group"
                         >
-                          <Trash2 className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                          <img
+                            src={photo}
+                            alt={`Spot photo ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          {idx === 0 && (
+                            <span className="absolute top-1 left-1 px-1.5 py-0.2 rounded bg-[#dfba89] text-[#12100e] text-[8px] font-black uppercase">
+                              Cover
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePhoto(idx)}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#100e0d]/80 hover:bg-rose-700 text-white flex items-center justify-center transition shadow-sm cursor-pointer"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-3.5 text-center rounded-xl border border-dashed border-[#383028] bg-[#100e0d] text-[#a89682] text-xs">
+                      <span>No photos uploaded (Optional). You can take a photo with your camera or upload from your device.</span>
+                    </div>
+                  )}
                 </div>
 
               </div>
