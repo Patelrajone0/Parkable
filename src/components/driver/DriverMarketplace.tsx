@@ -29,6 +29,7 @@ export default function DriverMarketplace({
 }: DriverMarketplaceProps) {
   const {
     filteredSpots,
+    spots,
     selectedSpot,
     setSelectedSpot,
     mapCenter,
@@ -37,6 +38,7 @@ export default function DriverMarketplace({
     openCheckout,
     userLiveLocation,
     setSearchFilters,
+    setIsListSpotOpen,
   } = useApp();
 
   return (
@@ -166,27 +168,40 @@ export default function DriverMarketplace({
           {filteredSpots.length === 0 ? (
             <div className="p-12 text-center bg-[#181512] rounded-3xl border border-dashed border-[#383028]">
               <Car className="w-12 h-12 text-[#756758] mx-auto mb-3" />
-              <h4 className="font-bold text-[#f6f2ec] text-base">No parking spaces found</h4>
+              <h4 className="font-bold text-[#f6f2ec] text-base">
+                {spots.length === 0 ? 'No parking spaces listed yet' : 'No parking spaces found'}
+              </h4>
               <p className="text-xs text-[#a89682] max-w-sm mx-auto mt-1 mb-4">
-                Try widening your vehicle size filter or resetting your search filters to view all city locations.
+                {spots.length === 0
+                  ? 'There are currently no parking spaces listed on ParkEase. Be the first to monetize an idle driveway or spot!'
+                  : 'Try widening your vehicle size filter or resetting your search filters to view all city locations.'}
               </p>
-              <button
-                onClick={() =>
-                  setSearchFilters({
-                    destination: '',
-                    vehicle_size: 'all',
-                    space_type: 'all',
-                    duration_hours: 2,
-                    has_ev: false,
-                    has_cctv: false,
-                    has_guard: false,
-                    is_covered: false,
-                  })
-                }
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20"
-              >
-                Reset All Filters
-              </button>
+              {spots.length === 0 ? (
+                <button
+                  onClick={() => setIsListSpotOpen(true)}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 transition cursor-pointer"
+                >
+                  List a Parking Space
+                </button>
+              ) : (
+                <button
+                  onClick={() =>
+                    setSearchFilters({
+                      destination: '',
+                      vehicle_size: 'all',
+                      space_type: 'all',
+                      duration_hours: 2,
+                      has_ev: false,
+                      has_cctv: false,
+                      has_guard: false,
+                      is_covered: false,
+                    })
+                  }
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 cursor-pointer"
+                >
+                  Reset All Filters
+                </button>
+              )}
             </div>
           ) : (
             /* Multi-column grid filling the rest of the page */

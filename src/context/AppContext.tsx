@@ -182,7 +182,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const savedSpots = localStorage.getItem(STORAGE_KEY_SPOTS);
       if (savedSpots) {
-        setSpots(JSON.parse(savedSpots));
+        try {
+          const parsed = JSON.parse(savedSpots);
+          const demoIds = ['spot-1', 'spot-2', 'spot-3', 'spot-4', 'spot-5', 'spot-6'];
+          const cleanSpots = Array.isArray(parsed)
+            ? parsed.filter(
+                (s: ParkingSpot) =>
+                  !demoIds.includes(s.id) &&
+                  s.host_id !== 'user-host-1' &&
+                  s.host_id !== 'user-host-4' &&
+                  s.host_name !== 'Marcus Vance' &&
+                  s.host_name !== 'Vikram Mehta'
+              )
+            : [];
+          setSpots(cleanSpots);
+          localStorage.setItem(STORAGE_KEY_SPOTS, JSON.stringify(cleanSpots));
+        } catch {
+          setSpots([]);
+        }
+      } else {
+        setSpots([]);
       }
 
       // Filter out any legacy demo bookings
