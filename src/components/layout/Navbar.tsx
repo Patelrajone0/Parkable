@@ -102,24 +102,6 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
             </button>
           )}
 
-          {/* Quick Mode Toggle */}
-          <button
-            onClick={() => setActiveRole(activeRole === 'driver' ? 'host' : 'driver')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#383028] bg-[#181512] hover:bg-[#25201b] hover:border-[#dfba89]/40 text-[#c9b7a4] hover:text-[#f6f2ec] text-xs font-semibold transition cursor-pointer"
-            title={`Switch to ${activeRole === 'driver' ? 'Host' : 'Driver'} mode`}
-          >
-            {activeRole === 'driver' ? (
-              <>
-                <Building2 className="w-3.5 h-3.5 text-[#dfba89]" />
-                <span className="hidden sm:inline">Host Hub</span>
-              </>
-            ) : (
-              <>
-                <Compass className="w-3.5 h-3.5 text-[#dfba89]" />
-                <span className="hidden sm:inline">Driver Map</span>
-              </>
-            )}
-          </button>
 
           {/* List a Spot CTA */}
           <button
