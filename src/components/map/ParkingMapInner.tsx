@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { ParkingSpot } from '@/types';
 
@@ -29,16 +29,67 @@ export default function ParkingMapInner({
 }: ParkingMapInnerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const tileLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const pinMarkerRef = useRef<L.Marker | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
+
+  const [mapType, setMapType] = useState<'dark' | 'streets' | 'satellite'>('dark');
+
+  // Helper to load tile layers based on mapType without API keys or watermarks
+  const applyTileLayers = (type: 'dark' | 'streets' | 'satellite', map: L.Map) => {
+    if (!tileLayerGroupRef.current) {
+      tileLayerGroupRef.current = L.layerGroup().addTo(map);
+    }
+    const group = tileLayerGroupRef.current;
+    group.clearLayers();
+
+    if (type === 'dark') {
+      // 1. ESRI World Dark Gray Base & Reference (Free, clean dark tiles, no API key required)
+      const darkBase = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution: '&copy; <a href="https://www.esri.com/">Esri</a> &copy; OSM',
+          maxNativeZoom: 16,
+          maxZoom: 19,
+        }
+      );
+      const darkRef = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution: '',
+          maxNativeZoom: 16,
+          maxZoom: 19,
+        }
+      );
+      group.addLayer(darkBase);
+      group.addLayer(darkRef);
+    } else if (type === 'streets') {
+      // 2. OpenStreetMap Standard (Free global street map)
+      const streets = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      });
+      group.addLayer(streets);
+    } else if (type === 'satellite') {
+      // 3. ESRI World Imagery (High-res aerial satellite photography)
+      const satellite = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, GeoEye',
+          maxNativeZoom: 18,
+          maxZoom: 19,
+        }
+      );
+      group.addLayer(satellite);
+    }
+  };
 
   // Initialize Map
   useEffect(() => {
     const container = mapContainerRef.current;
     if (!container) return;
 
-    // Reset leaflet ID if container was re-mounted by React
     if ((container as any)._leaflet_id) {
       delete (container as any)._leaflet_id;
     }
@@ -53,30 +104,19 @@ export default function ParkingMapInner({
       zoomControl: false,
     });
 
-    // Dark CartoDB tile provider matching the Dark Desert Titanium aesthetic
-    const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-      maxZoom: 19,
-      subdomains: 'abcd',
-    }).addTo(map);
+    // Apply selected tile layer
+    applyTileLayers(mapType, map);
 
-    // Fallback to OpenStreetMap if CartoDB network tile fails
-    tileLayer.on('tileerror', () => {
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-      }).addTo(map);
-    });
-
-    // Add Zoom control at top right
+    // Zoom control on top right
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Add layer group for spot markers
+    // Layer group for spot markers
     const markersLayer = L.layerGroup().addTo(map);
     markersLayerRef.current = markersLayer;
 
     mapInstanceRef.current = map;
 
-    // Critical: Call invalidateSize on multiple layout passes so map tiles render immediately
+    // Call invalidateSize on multiple layout passes so map tiles render immediately
     map.invalidateSize();
     const t1 = setTimeout(() => map.invalidateSize(), 80);
     const t2 = setTimeout(() => map.invalidateSize(), 250);
@@ -105,8 +145,16 @@ export default function ParkingMapInner({
       }
       map.remove();
       mapInstanceRef.current = null;
+      tileLayerGroupRef.current = null;
     };
   }, []);
+
+  // Update tile layers when mapType changes
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      applyTileLayers(mapType, mapInstanceRef.current);
+    }
+  }, [mapType]);
 
   // Update center when prop changes
   useEffect(() => {
@@ -297,6 +345,43 @@ export default function ParkingMapInner({
         className="w-full h-full"
         style={{ minHeight: '350px' }}
       />
+
+      {/* Map Type Switcher Floating Control */}
+      <div className="absolute top-3 left-3 z-[400] flex items-center bg-[#141210]/95 backdrop-blur-md p-1 rounded-xl border border-[#383028] shadow-xl text-[10px] font-semibold text-[#a89682]">
+        <button
+          type="button"
+          onClick={() => setMapType('dark')}
+          className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+            mapType === 'dark'
+              ? 'bg-[#282119] text-[#dfba89] font-bold border border-[#dfba89]/40 shadow-xs'
+              : 'hover:text-[#f6f2ec]'
+          }`}
+        >
+          Dark
+        </button>
+        <button
+          type="button"
+          onClick={() => setMapType('streets')}
+          className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+            mapType === 'streets'
+              ? 'bg-[#282119] text-[#dfba89] font-bold border border-[#dfba89]/40 shadow-xs'
+              : 'hover:text-[#f6f2ec]'
+          }`}
+        >
+          Streets
+        </button>
+        <button
+          type="button"
+          onClick={() => setMapType('satellite')}
+          className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+            mapType === 'satellite'
+              ? 'bg-[#282119] text-[#dfba89] font-bold border border-[#dfba89]/40 shadow-xs'
+              : 'hover:text-[#f6f2ec]'
+          }`}
+        >
+          Satellite
+        </button>
+      </div>
     </div>
   );
 }
