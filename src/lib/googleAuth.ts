@@ -66,7 +66,8 @@ export function decodeGoogleJwt(token: string): GoogleUserPayload | null {
 }
 
 /**
- * Launch official Google Identity Services sign-in popup or prompt
+ * Launch official Google Identity Services sign-in popup
+ * Uses google.accounts.oauth2.initTokenClient to open accounts.google.com/v3/signin/accountchooser popup
  */
 export function triggerOfficialGoogleSignIn(
   clientId: string,
@@ -81,6 +82,59 @@ export function triggerOfficialGoogleSignIn(
   }
 
   try {
+    // 1. Preferred modern Google OAuth 2.0 popup: opens the exact account chooser window
+    if (window.google.accounts.oauth2 && typeof window.google.accounts.oauth2.initTokenClient === 'function') {
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid',
+        prompt: 'select_account',
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse.error) {
+            onError(tokenResponse.error_description || tokenResponse.error || 'Google sign-in was cancelled or failed.');
+            return;
+          }
+
+          if (!tokenResponse.access_token) {
+            onError('Google did not return an access token.');
+            return;
+          }
+
+          try {
+            // Fetch live profile details using the returned OAuth access token
+            const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: {
+                Authorization: `Bearer ${tokenResponse.access_token}`,
+              },
+            });
+
+            if (!res.ok) {
+              throw new Error(`Google userinfo request failed with status: ${res.status}`);
+            }
+
+            const data = await res.json();
+            const fullName = data.name || `${data.given_name || ''} ${data.family_name || ''}`.trim() || data.email?.split('@')[0] || 'Google User';
+
+            onSuccess({
+              sub: data.sub || `google-${Date.now()}`,
+              name: fullName,
+              email: data.email,
+              picture: data.picture,
+              given_name: data.given_name,
+              family_name: data.family_name,
+              email_verified: data.email_verified,
+            });
+          } catch (fetchErr: any) {
+            onError(fetchErr.message || 'Could not retrieve user profile from Google.');
+          }
+        },
+      });
+
+      // Launch the accounts.google.com/v3/signin/accountchooser popup
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
+      return;
+    }
+
+    // 2. Fallback to Google ID Token initialize & prompt if oauth2 is not available
     window.google.accounts.id.initialize({
       client_id: clientId,
       callback: (response: any) => {
@@ -99,7 +153,6 @@ export function triggerOfficialGoogleSignIn(
       cancel_on_tap_outside: true,
     });
 
-    // Display Google One Tap / sign-in prompt
     window.google.accounts.id.prompt((notification: any) => {
       if (notification.isNotDisplayed()) {
         console.warn('Google One Tap not displayed:', notification.getNotDisplayedReason());
