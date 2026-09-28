@@ -90,3 +90,36 @@ cp .env.example .env.local
 ```
 Add your `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`, then run the SQL migration in `supabase/schema.sql` via your Supabase SQL editor.
 *(Note: If no Supabase credentials are provided, Parkable operates out-of-the-box in local reactive storage mode, allowing instant testing of all features).*
+
+---
+
+## 🌐 Deploy to Render.com
+
+This project is optimized for deployment as a **Free Static Site** on Render with zero sleep delays, fast global CDN delivery, and automatic continuous deployment on every Git push.
+
+### Option A: 1-Click via Render Blueprint (Recommended)
+1. Go to your [Render Dashboard](https://dashboard.render.com).
+2. Click **New +** and select **Blueprint**.
+3. Connect your GitHub repository (`Patelrajone0/Parkable`).
+4. Render will automatically detect [`render.yaml`](file:///c:/Users/Raj%20Patel/OneDrive/Documents/ParkEase/render.yaml) and configure the build command and publish directory.
+5. Click **Apply**. Your app will build and go live in ~1 minute!
+
+### Option B: Manual Static Site Setup
+If creating the service manually:
+1. Go to [Render Dashboard](https://dashboard.render.com) > **New +** > **Static Site**.
+2. Connect your GitHub repository.
+3. Configure the following fields:
+   - **Name**: `parkease` (or any name you choose)
+   - **Branch**: `main`
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `out`
+4. *(Optional)* Under **Environment Variables**, add:
+   - `NODE_VERSION`: `20`
+   - `NEXT_PUBLIC_ADMIN_SECRET`: `admin2026` (or your custom admin passcode)
+   - `NEXT_PUBLIC_SUPABASE_URL` & `NEXT_PUBLIC_SUPABASE_ANON_KEY` (if using Supabase)
+5. Under **Redirects/Rewrites**, add:
+   - Rewrite `/admin` ➔ `/admin/index.html`
+   - Rewrite `/login` ➔ `/login/index.html`
+   - Rewrite `/*` ➔ `/index.html`
+6. Click **Create Static Site**.
+
