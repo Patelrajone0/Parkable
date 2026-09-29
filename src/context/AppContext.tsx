@@ -12,6 +12,16 @@ export interface ToastMessage {
   type: 'success' | 'error' | 'info' | 'warning';
 }
 
+export type BottomNavStyle = 
+  | 'floating-island'   // Option 1: Modern Dynamic Floating Glass Island (VisionOS / Arc)
+  | 'curved-scoop'      // Option 2: Curved Center Scoop / Concave Notch (Fintech / Uber)
+  | 'dynamic-pill'      // Option 3: Minimalist Dynamic Capsule (Compact Pill)
+  | 'titanium-bar'      // Option 4: Titanium Segmented Bar (Edge-to-Edge Classic Luxury)
+  | 'action-fab';       // Option 5: Elevated Action FAB Dock (Material 3 / Action Orbit)
+
+export type NavGlowEffect = 'neon' | 'soft' | 'none';
+export type NavShowLabels = 'always' | 'active-only' | 'icons-only';
+
 interface AppContextType {
   currentUser: UserProfile | null;
   isAuthenticated: boolean;
@@ -88,6 +98,16 @@ interface AppContextType {
   setOnlyNearestChargers: (val: boolean) => void;
   maxChargersLimit: number;
   setMaxChargersLimit: (limit: number) => void;
+
+  // Bottom Navigation Customizer & Live Styles
+  bottomNavStyle: BottomNavStyle;
+  setBottomNavStyle: (style: BottomNavStyle) => void;
+  isNavCustomizerOpen: boolean;
+  setIsNavCustomizerOpen: (open: boolean) => void;
+  navGlowEffect: NavGlowEffect;
+  setNavGlowEffect: (glow: NavGlowEffect) => void;
+  navShowLabels: NavShowLabels;
+  setNavShowLabels: (labels: NavShowLabels) => void;
 }
 
 export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -110,6 +130,9 @@ const STORAGE_KEY_AUTH = 'parkable_is_authenticated_v1';
 const STORAGE_KEY_USER = 'parkable_active_user_v1';
 const STORAGE_KEY_USERS = 'parkable_users_v1';
 const STORAGE_KEY_COMMISSION = 'parkable_commission_rate_v1';
+const STORAGE_KEY_NAV_STYLE = 'parkable_bottom_nav_style_v2';
+const STORAGE_KEY_NAV_GLOW = 'parkable_bottom_nav_glow_v2';
+const STORAGE_KEY_NAV_LABELS = 'parkable_bottom_nav_labels_v2';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -127,6 +150,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [platformCommissionRate, setPlatformCommissionRate] = useState<number>(0.10);
+
+  // Bottom Navigation Layout Customizer
+  const [bottomNavStyle, setBottomNavStyleState] = useState<BottomNavStyle>('floating-island');
+  const [isNavCustomizerOpen, setIsNavCustomizerOpen] = useState<boolean>(false);
+  const [navGlowEffect, setNavGlowEffectState] = useState<NavGlowEffect>('neon');
+  const [navShowLabels, setNavShowLabelsState] = useState<NavShowLabels>('always');
+
+  const setBottomNavStyle = (style: BottomNavStyle) => {
+    setBottomNavStyleState(style);
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem(STORAGE_KEY_NAV_STYLE, style); } catch {}
+    }
+  };
+
+  const setNavGlowEffect = (glow: NavGlowEffect) => {
+    setNavGlowEffectState(glow);
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem(STORAGE_KEY_NAV_GLOW, glow); } catch {}
+    }
+  };
+
+  const setNavShowLabels = (labels: NavShowLabels) => {
+    setNavShowLabelsState(labels);
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem(STORAGE_KEY_NAV_LABELS, labels); } catch {}
+    }
+  };
 
   // Live User Location & Nearest Chargers Optimization
   const [userLiveLocation, setUserLiveLocation] = useState<{ lat: number; lng: number }>({
@@ -289,6 +339,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (savedComm) {
         setPlatformCommissionRate(parseFloat(savedComm));
       }
+
+      const savedNavStyle = localStorage.getItem(STORAGE_KEY_NAV_STYLE) as BottomNavStyle | null;
+      if (savedNavStyle) setBottomNavStyleState(savedNavStyle);
+
+      const savedNavGlow = localStorage.getItem(STORAGE_KEY_NAV_GLOW) as NavGlowEffect | null;
+      if (savedNavGlow) setNavGlowEffectState(savedNavGlow);
+
+      const savedNavLabels = localStorage.getItem(STORAGE_KEY_NAV_LABELS) as NavShowLabels | null;
+      if (savedNavLabels) setNavShowLabelsState(savedNavLabels);
     } catch (e) {
       console.warn('Could not read from local storage:', e);
       setIsLoadingAuth(false);
@@ -772,6 +831,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setOnlyNearestChargers,
         maxChargersLimit,
         setMaxChargersLimit,
+
+        bottomNavStyle,
+        setBottomNavStyle,
+        isNavCustomizerOpen,
+        setIsNavCustomizerOpen,
+        navGlowEffect,
+        setNavGlowEffect,
+        navShowLabels,
+        setNavShowLabels,
       }}
     >
       {children}

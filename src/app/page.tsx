@@ -14,6 +14,7 @@ import ListSpotModal from '@/components/host/ListSpotModal';
 import DriverBookingsModal from '@/components/driver/DriverBookingsModal';
 import ActiveBookingCard from '@/components/driver/ActiveBookingCard';
 import AuthModal from '@/components/auth/AuthModal';
+import BottomNavCustomizerModal from '@/components/layout/BottomNavCustomizerModal';
 import ToastContainer from '@/components/ui/ToastContainer';
 import { ParkingSpot } from '@/types';
 import { Car, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
@@ -183,6 +184,9 @@ function MainApp() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
+
+      {/* Bottom Nav Customizer Studio (5 Layout Demos) */}
+      <BottomNavCustomizerModal />
 
       {/* Toast Feedback Notifications */}
       <ToastContainer />
