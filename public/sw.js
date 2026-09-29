@@ -1,19 +1,31 @@
 // Parkable Progressive Web App Service Worker
-const CACHE_NAME = 'parkable-cache-v2';
-const PRECACHE_RESOURCES = [
-  '/',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/apple-touch-icon.png'
-];
+const CACHE_NAME = 'parkable-cache-v3';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_RESOURCES).catch((err) => {
-        console.warn('PWA Pre-cache notice:', err);
-      });
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const scope = (self.registration && self.registration.scope) || '/';
+      const precacheUrls = [
+        scope,
+        new URL('manifest.json', scope).href,
+        new URL('icons/icon-192.png', scope).href,
+        new URL('icons/icon-512.png', scope).href,
+        new URL('icons/apple-touch-icon.png', scope).href,
+      ];
+
+      // Cache all available resources without failing the entire installation if one resource is missing
+      await Promise.all(
+        precacheUrls.map(async (url) => {
+          try {
+            const response = await fetch(url);
+            if (response && response.ok) {
+              await cache.put(url, response);
+            }
+          } catch (err) {
+            console.warn('PWA Precache item skip:', url, err);
+          }
+        })
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -35,8 +47,12 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
-  // Let auth callbacks and live Supabase queries pass directly through network
-  if (event.request.url.includes('/api/auth') || event.request.url.includes('supabase.co')) {
+  // Let auth callbacks, Google Sign-In, and Supabase queries pass directly through network
+  if (
+    event.request.url.includes('/api/auth') || 
+    event.request.url.includes('supabase.co') ||
+    event.request.url.includes('accounts.google.com')
+  ) {
     return;
   }
 
@@ -69,7 +85,8 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       }).catch(() => {
         if (event.request.mode === 'navigate') {
-          return caches.match('/');
+          const scope = (self.registration && self.registration.scope) || '/';
+          return caches.match(scope) || caches.match('/');
         }
       });
     })

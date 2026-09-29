@@ -12,11 +12,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 export const metadata: Metadata = {
   title: "Parkable | Airbnb for Private Parking Spaces",
   description: "Monetize idle driveways or rent hourly parking spaces in congested cities. Mobile-first peer-to-peer parking marketplace.",
   keywords: ["parking marketplace", "rent parking spot", "hourly parking", "private driveway rental", "EV charging spot", "Parkable"],
-  manifest: "/manifest.json",
+  manifest: `${basePath}/manifest.json`,
+  applicationName: "Parkable",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -24,10 +27,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: `${basePath}/icons/icon-192.png`, sizes: "192x192", type: "image/png" },
+      { url: `${basePath}/icons/icon-512.png`, sizes: "512x512", type: "image/png" },
     ],
-    apple: "/icons/apple-touch-icon.png",
+    apple: `${basePath}/icons/apple-touch-icon.png`,
   },
 };
 
@@ -53,11 +56,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <link rel="manifest" href={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/manifest.json`} />
+        <link rel="manifest" href={`${basePath}/manifest.json`} />
         <meta name="theme-color" content="#181512" />
-        <link rel="apple-touch-icon" href={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/icons/apple-touch-icon.png`} />
+        <link rel="apple-touch-icon" href={`${basePath}/icons/apple-touch-icon.png`} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Parkable" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
       </head>

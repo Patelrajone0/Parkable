@@ -15,7 +15,8 @@ import {
   LogOut,
   MapPin,
   Lock,
-  Download
+  Download,
+  CheckCircle2
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -29,7 +30,7 @@ interface NavbarProps {
 
 export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
   const router = useRouter();
-  const { isInstallable, promptInstall } = usePwa();
+  const { isInstallable, isInstalled, promptInstall, openInstallGuide } = usePwa();
   const {
     currentUser,
     isAuthenticated,
@@ -119,8 +120,17 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
           )}
 
 
-          {/* PWA Install Button */}
-          {isInstallable && (
+          {/* PWA Install / Open in App Button */}
+          {isInstalled ? (
+            <button
+              onClick={openInstallGuide}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 text-xs font-bold transition shadow-xs cursor-pointer"
+              title="Parkable is installed on your device (Click for app info)"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">App Installed</span>
+            </button>
+          ) : (
             <button
               onClick={async () => {
                 const installed = await promptInstall();
@@ -129,9 +139,9 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
                 }
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#dfba89]/40 bg-[#dfba89]/10 hover:bg-[#dfba89]/20 text-[#dfba89] text-xs font-bold transition shadow-xs cursor-pointer"
-              title="Install Parkable app"
+              title="Download Parkable app to your device"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-[#dfba89]" />
               <span className="hidden sm:inline">Install App</span>
             </button>
           )}
@@ -253,21 +263,32 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
 
                     {/* Account Profile, Install App & Sign Out */}
                     <div className="p-1 space-y-0.5 border-t border-[#2d2620]">
-                      {isInstallable && (
-                        <button
-                          onClick={async () => {
-                            setIsUserMenuOpen(false);
+                      <button
+                        onClick={async () => {
+                          setIsUserMenuOpen(false);
+                          if (isInstalled) {
+                            openInstallGuide();
+                          } else {
                             const installed = await promptInstall();
                             if (installed) {
                               addToast('Parkable Installed! 🚀', 'Parkable is now installed on your device.', 'success');
                             }
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-[#dfba89] hover:bg-[#25201a] rounded-lg transition cursor-pointer"
-                        >
-                          <Download className="w-4 h-4 text-[#dfba89]" />
-                          <span>Install Parkable App</span>
-                        </button>
-                      )}
+                          }
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-[#dfba89] hover:bg-[#25201a] rounded-lg transition cursor-pointer"
+                      >
+                        {isInstalled ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <span className="text-emerald-400">Parkable App Installed</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4 text-[#dfba89]" />
+                            <span>Install Parkable App</span>
+                          </>
+                        )}
+                      </button>
 
                       <button
                         onClick={() => {
