@@ -13,11 +13,11 @@ export interface ToastMessage {
 }
 
 export type BottomNavStyle = 
-  | 'floating-island'   // Option 1: Modern Dynamic Floating Glass Island (VisionOS / Arc)
-  | 'curved-scoop'      // Option 2: Curved Center Scoop / Concave Notch (Fintech / Uber)
-  | 'dynamic-pill'      // Option 3: Minimalist Dynamic Capsule (Compact Pill)
-  | 'titanium-bar'      // Option 4: Titanium Segmented Bar (Edge-to-Edge Classic Luxury)
-  | 'action-fab';       // Option 5: Elevated Action FAB Dock (Material 3 / Action Orbit)
+  | 'glass-aura'        // Option 1: Aura Glass Island (VisionOS Signature Ambient Halo)
+  | 'glass-obsidian'    // Option 2: Frosted Obsidian Pill (Minimalist Liquid Glass Capsule)
+  | 'glass-neon'        // Option 3: Cyber Edge Island (Neon Perimeter Light Rim)
+  | 'glass-split'       // Option 4: Split Island Duo (Twin Floating Glass Pods)
+  | 'glass-champagne';  // Option 5: Champagne Metallic Glass (Luxury Beveled Rim Island)
 
 export type NavGlowEffect = 'neon' | 'soft' | 'none';
 export type NavShowLabels = 'always' | 'active-only' | 'icons-only';
@@ -152,7 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [platformCommissionRate, setPlatformCommissionRate] = useState<number>(0.10);
 
   // Bottom Navigation Layout Customizer
-  const [bottomNavStyle, setBottomNavStyleState] = useState<BottomNavStyle>('floating-island');
+  const [bottomNavStyle, setBottomNavStyleState] = useState<BottomNavStyle>('glass-aura');
   const [isNavCustomizerOpen, setIsNavCustomizerOpen] = useState<boolean>(false);
   const [navGlowEffect, setNavGlowEffectState] = useState<NavGlowEffect>('neon');
   const [navShowLabels, setNavShowLabelsState] = useState<NavShowLabels>('always');
@@ -341,7 +341,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const savedNavStyle = localStorage.getItem(STORAGE_KEY_NAV_STYLE) as BottomNavStyle | null;
-      if (savedNavStyle) setBottomNavStyleState(savedNavStyle);
+      const validGlassStyles: BottomNavStyle[] = ['glass-aura', 'glass-obsidian', 'glass-neon', 'glass-split', 'glass-champagne'];
+      if (savedNavStyle && validGlassStyles.includes(savedNavStyle)) {
+        setBottomNavStyleState(savedNavStyle);
+      } else {
+        setBottomNavStyleState('glass-aura');
+      }
 
       const savedNavGlow = localStorage.getItem(STORAGE_KEY_NAV_GLOW) as NavGlowEffect | null;
       if (savedNavGlow) setNavGlowEffectState(savedNavGlow);

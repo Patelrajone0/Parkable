@@ -6,15 +6,13 @@ import {
   X, 
   Sparkles, 
   Check, 
-  Layers, 
-  Compass, 
-  PlusCircle, 
-  Sliders, 
   Palette, 
   Eye, 
   Shuffle,
-  ShieldCheck,
-  Zap
+  Compass,
+  Plus,
+  Layers,
+  CircleDot
 } from 'lucide-react';
 
 interface LayoutOption {
@@ -24,54 +22,54 @@ interface LayoutOption {
   tag: string;
   tagColor: string;
   description: string;
-  previewType: 'island' | 'scoop' | 'pill' | 'titanium' | 'fab';
+  previewType: 'aura' | 'obsidian' | 'neon' | 'split' | 'champagne';
 }
 
 const LAYOUT_OPTIONS: LayoutOption[] = [
   {
-    id: 'floating-island',
-    title: 'Floating Glass Island',
-    subtitle: 'VisionOS & iOS 18 Style',
-    tag: 'Trending ★',
-    tagColor: 'bg-[#dfba89]/20 text-[#dfba89] border-[#dfba89]/40',
-    description: 'Detached floating dock with frosted glassmorphism, rounded corners, and elevated glowing gold center button.',
-    previewType: 'island',
+    id: 'glass-aura',
+    title: 'Aura Glass Island',
+    subtitle: 'VisionOS Signature Halo (Your Favorite)',
+    tag: 'Favorite ★',
+    tagColor: 'bg-[#dfba89]/25 text-[#dfba89] border-[#dfba89]/40',
+    description: 'The iconic floating glass dock with deep frosted blur, rounded pill corners, and an elevated gold titanium orb radiating a warm atmospheric halo ring.',
+    previewType: 'aura',
   },
   {
-    id: 'curved-scoop',
-    title: 'Curved Center Scoop',
-    subtitle: 'Fintech & Rideshare Cutout',
-    tag: 'Popular',
-    tagColor: 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30',
-    description: 'Edge-to-edge navbar with an architectural concave notch in the center where the gold button sits nestled in a scoop.',
-    previewType: 'scoop',
-  },
-  {
-    id: 'dynamic-pill',
-    title: 'Minimal Dynamic Pill',
-    subtitle: 'Arc Search & Dynamic Island',
+    id: 'glass-obsidian',
+    title: 'Frosted Obsidian Capsule',
+    subtitle: 'Minimalist Liquid Smoked Glass',
     tag: 'Ultra Clean',
-    tagColor: 'bg-sky-950/40 text-sky-400 border-sky-500/30',
-    description: 'Compact rounded-full capsule that maximizes screen space. The active tab expands with a gold pill while inactive tabs stay minimal.',
-    previewType: 'pill',
+    tagColor: 'bg-zinc-800/60 text-zinc-200 border-zinc-600/40',
+    description: 'Ultra-compact floating capsule with deep obsidian liquid glassmorphism, flush embedded gold jewel button, and dynamic expanding tab pills.',
+    previewType: 'obsidian',
   },
   {
-    id: 'titanium-bar',
-    title: 'Titanium Segmented Bar',
-    subtitle: 'Edge-to-Edge Classic Luxury',
-    tag: 'Executive',
-    tagColor: 'bg-amber-950/40 text-amber-300 border-amber-500/30',
-    description: 'Classic edge-to-edge bar with brushed titanium dark gradient, top neon amber indicator line, and faceted gold center badge.',
-    previewType: 'titanium',
+    id: 'glass-neon',
+    title: 'Cyber Edge Glass Island',
+    subtitle: 'Luminous Perimeter Neon Ring',
+    tag: 'High Energy',
+    tagColor: 'bg-amber-950/40 text-amber-300 border-amber-500/40',
+    description: 'Floating glass dock framed with a continuous neon-gold perimeter light rim, pulsating dual-ring aura button, and neon micro-dot indicators.',
+    previewType: 'neon',
   },
   {
-    id: 'action-fab',
-    title: 'Elevated Action FAB Dock',
-    subtitle: 'Material You & Action Orbit',
-    tag: 'Bold Action',
-    tagColor: 'bg-purple-950/40 text-purple-300 border-purple-500/30',
-    description: 'Streamlined dock with an oversized high-elevation Floating Action Button (FAB) floating above the bar with vibrant gold ring.',
-    previewType: 'fab',
+    id: 'glass-split',
+    title: 'Split Island Duo',
+    subtitle: 'Twin Floating Glass Pods',
+    tag: 'Futuristic',
+    tagColor: 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30',
+    description: 'Two detached floating glass bodies: an ergonomic left navigation pod paired with an independent floating glass action satellite orb.',
+    previewType: 'split',
+  },
+  {
+    id: 'glass-champagne',
+    title: 'Champagne Metallic Glass',
+    subtitle: 'Luxury Beveled Rim Island',
+    tag: 'Executive Luxury',
+    tagColor: 'bg-[#dfba89]/15 text-[#f3dfc6] border-[#dfba89]/30',
+    description: 'Smoked luxury glass island featuring a brushed champagne-gold metallic top accent rail, beveled dark titanium chassis, and an embossed squircle medallion.',
+    previewType: 'champagne',
   },
 ];
 
@@ -92,7 +90,7 @@ export default function BottomNavCustomizerModal() {
 
   const handleSelectStyle = (style: BottomNavStyle, title: string) => {
     setBottomNavStyle(style);
-    addToast('Nav Layout Updated! 🎨', `Switched to "${title}". Enjoy the live view!`, 'success');
+    addToast('Glass Island Updated! 🏝️', `Switched to "${title}". Enjoy the live view!`, 'success');
   };
 
   const handleCycleNext = () => {
@@ -100,11 +98,11 @@ export default function BottomNavCustomizerModal() {
     const nextIndex = (currentIndex + 1) % LAYOUT_OPTIONS.length;
     const nextStyle = LAYOUT_OPTIONS[nextIndex];
     setBottomNavStyle(nextStyle.id);
-    addToast('Demo Layout Cycled', `Now previewing: ${nextStyle.title}`, 'info');
+    addToast('Glass Demo Cycled', `Now previewing: ${nextStyle.title}`, 'info');
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       <div 
         className="relative w-full max-w-xl bg-[#181512] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden border border-[#383028] flex flex-col max-h-[92vh] animate-in slide-in-from-bottom duration-300"
         onClick={(e) => e.stopPropagation()}
@@ -113,18 +111,18 @@ export default function BottomNavCustomizerModal() {
         <div className="p-4 sm:p-5 bg-[#12100e] text-[#f6f2ec] border-b border-[#2e261f] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-[#dfba89]/15 border border-[#dfba89]/30 flex items-center justify-center text-[#dfba89]">
-              <Palette className="w-5 h-5 text-[#dfba89]" />
+              <Sparkles className="w-5 h-5 text-[#dfba89]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black uppercase tracking-wider text-[#dfba89] bg-[#dfba89]/15 px-2 py-0.5 rounded-full border border-[#dfba89]/30">
-                  Customization Studio
+                  Floating Glass Collection
                 </span>
                 <span className="text-[11px] text-[#756758]">•</span>
-                <span className="text-[11px] text-[#a89682]">5 Live Layouts</span>
+                <span className="text-[11px] text-[#a89682]">5 Island Styles</span>
               </div>
               <h3 className="font-extrabold text-base sm:text-lg text-[#f6f2ec] mt-0.5">
-                Customize Bottom Navigation Bar
+                Floating Glass Island Variations
               </h3>
             </div>
           </div>
@@ -133,10 +131,10 @@ export default function BottomNavCustomizerModal() {
             <button
               onClick={handleCycleNext}
               className="px-2.5 py-1.5 rounded-xl bg-[#241f1a] hover:bg-[#2e2620] text-[#dfba89] border border-[#dfba89]/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-              title="Cycle to next layout demo"
+              title="Cycle to next Floating Glass Island demo"
             >
               <Shuffle className="w-3.5 h-3.5 text-[#dfba89]" />
-              <span className="hidden sm:inline">Cycle Demo</span>
+              <span className="hidden sm:inline">Cycle Island</span>
             </button>
             <button
               onClick={() => setIsNavCustomizerOpen(false)}
@@ -151,19 +149,19 @@ export default function BottomNavCustomizerModal() {
         {/* Scrollable Content Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 pb-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1rem))]">
           
-          {/* Section 1: The 5 Layout Options */}
+          {/* Section 1: The 5 Floating Glass Island Options */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#dfba89]">
-                  Select Layout Style (Live Demo)
+                  Floating Glass Island Variations (Live Demos)
                 </h4>
                 <p className="text-[11px] text-[#a89682] mt-0.5">
-                  Tap any option to instantly update the bottom navigation bar on your device.
+                  Tap any variation to immediately see the live glass dock transform at the bottom of your phone.
                 </p>
               </div>
               <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#241f1a] border border-[#383028] text-[#c2b29d] font-mono">
-                {LAYOUT_OPTIONS.findIndex(l => l.id === bottomNavStyle) + 1} / 5 Active
+                {LAYOUT_OPTIONS.findIndex(l => l.id === bottomNavStyle) + 1} / 5
               </span>
             </div>
 
@@ -219,85 +217,81 @@ export default function BottomNavCustomizerModal() {
                       {option.description}
                     </p>
 
-                    {/* Miniature Layout Shape Wireframe / Visual Preview */}
-                    <div className="mt-3 pt-2.5 border-t border-[#2e261f]/70 flex items-center justify-between">
-                      {option.previewType === 'island' && (
-                        <div className="w-full h-8 rounded-xl bg-[#0e0d0c] border border-[#dfba89]/30 px-3 flex items-center justify-between relative shadow-inner">
+                    {/* Miniature Layout Shape Visual Preview */}
+                    <div className="mt-3 pt-2.5 border-t border-[#2e261f]/70">
+                      {option.previewType === 'aura' && (
+                        <div className="w-full h-8 rounded-2xl bg-[#161310]/90 backdrop-blur-md border border-[#dfba89]/40 px-3 flex items-center justify-between relative shadow-lg">
                           <div className="flex gap-2">
-                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
-                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
+                            <div className="w-3.5 h-3.5 rounded-full bg-[#dfba89]/30" />
+                            <div className="w-3.5 h-3.5 rounded-full bg-[#756758]/50" />
                           </div>
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#dfba89] to-[#b37d4e] -mt-3 border-2 border-[#161310] shadow-md flex items-center justify-center text-[9px] text-[#12100e] font-bold">
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-r from-[#dfba89] to-[#b37d4e] -mt-3.5 border-2 border-[#161310] shadow-[0_0_12px_#dfba89] flex items-center justify-center text-[10px] text-[#12100e] font-black">
                             +
                           </div>
                           <div className="flex gap-2">
-                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
-                            <div className="w-3 h-3 rounded-full bg-[#dfba89]" />
+                            <div className="w-3.5 h-3.5 rounded-full bg-[#756758]/50" />
+                            <div className="w-3.5 h-3.5 rounded-full bg-[#756758]/50" />
                           </div>
                         </div>
                       )}
 
-                      {option.previewType === 'scoop' && (
-                        <div className="w-full h-8 rounded-b-xl bg-[#0e0d0c] border-t-2 border-[#dfba89]/40 px-3 flex items-center justify-between relative">
-                          <div className="flex gap-2">
-                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
-                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
-                          </div>
-                          {/* Scoop cutout */}
-                          <div className="relative -mt-4">
-                            <div className="w-7 h-7 rounded-full bg-[#dfba89] border-2 border-[#0e0d0c] shadow-lg flex items-center justify-center text-[10px] text-[#12100e] font-black">
-                              +
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
-                            <div className="w-3 h-3 rounded-full bg-[#dfba89]" />
-                          </div>
-                        </div>
-                      )}
-
-                      {option.previewType === 'pill' && (
-                        <div className="w-full flex justify-center py-1">
-                          <div className="w-48 h-7 rounded-full bg-[#0e0d0c] border border-[#383028] px-3 flex items-center justify-between shadow-inner">
-                            <div className="w-2.5 h-2.5 rounded-full bg-[#756758]/50" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-[#756758]/50" />
-                            <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#dfba89] to-[#b37d4e] flex items-center justify-center text-[9px] text-[#12100e] font-bold">
-                              +
-                            </div>
-                            <div className="w-2.5 h-2.5 rounded-full bg-[#756758]/50" />
+                      {option.previewType === 'obsidian' && (
+                        <div className="w-full flex justify-center py-0.5">
+                          <div className="w-56 h-7 rounded-full bg-[#0a0908]/90 backdrop-blur-xl border border-white/10 ring-1 ring-[#dfba89]/30 px-3 flex items-center justify-between shadow-xl">
                             <div className="px-2 py-0.5 rounded-full bg-[#dfba89] text-[8px] font-bold text-[#12100e]">Active</div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#756758]/50" />
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-[#dfba89] to-[#b37d4e] flex items-center justify-center text-[9px] text-[#12100e] font-bold shadow-md">
+                              +
+                            </div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#756758]/50" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#756758]/50" />
                           </div>
                         </div>
                       )}
 
-                      {option.previewType === 'titanium' && (
-                        <div className="w-full h-8 bg-gradient-to-r from-[#181512] via-[#241f1a] to-[#181512] border-t-2 border-[#dfba89] px-3 flex items-center justify-between">
-                          <div className="flex gap-3">
-                            <div className="w-4 h-1 rounded bg-[#dfba89]" />
-                            <div className="w-3 h-3 rounded bg-[#756758]/40" />
-                          </div>
-                          <div className="w-6 h-6 rounded-lg bg-[#141210] border border-[#dfba89] -mt-2 flex items-center justify-center text-[9px] text-[#dfba89] font-bold">
-                            +
-                          </div>
-                          <div className="flex gap-3">
-                            <div className="w-3 h-3 rounded bg-[#756758]/40" />
-                            <div className="w-3 h-3 rounded bg-[#756758]/40" />
-                          </div>
-                        </div>
-                      )}
-
-                      {option.previewType === 'fab' && (
-                        <div className="w-full h-8 rounded-xl bg-[#0e0d0c] border border-[#383028] px-3 flex items-center justify-between relative">
+                      {option.previewType === 'neon' && (
+                        <div className="w-full h-8 rounded-2xl bg-[#12100e] border border-[#dfba89] shadow-[0_0_14px_rgba(223,186,137,0.35)] px-3 flex items-center justify-between relative">
                           <div className="flex gap-2">
-                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
-                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
-                          </div>
-                          <div className="w-7 h-7 rounded-2xl bg-gradient-to-tr from-[#dfba89] to-[#b37d4e] -mt-5 shadow-lg border-2 border-[#0e0d0c] flex items-center justify-center text-[11px] text-[#12100e] font-bold">
-                            +
-                          </div>
-                          <div className="flex gap-2">
-                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
                             <div className="w-3 h-3 rounded-full bg-[#dfba89]" />
+                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
+                          </div>
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-r from-[#ffe5b4] to-[#dfba89] -mt-3 ring-2 ring-[#dfba89] shadow-[0_0_15px_#dfba89] flex items-center justify-center text-[10px] text-[#12100e] font-black">
+                            +
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
+                            <div className="w-3 h-3 rounded-full bg-[#756758]/50" />
+                          </div>
+                        </div>
+                      )}
+
+                      {option.previewType === 'split' && (
+                        <div className="w-full flex items-center justify-center gap-2 py-0.5">
+                          <div className="w-48 h-7 rounded-full bg-[#161310]/90 backdrop-blur-md border border-[#dfba89]/30 px-3 flex items-center justify-between shadow-lg">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#dfba89]" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#756758]/50" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#756758]/50" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#756758]/50" />
+                          </div>
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#dfba89] to-[#b37d4e] border-2 border-white/20 shadow-[0_0_12px_#dfba89] flex items-center justify-center text-[10px] text-[#12100e] font-black shrink-0">
+                            +
+                          </div>
+                        </div>
+                      )}
+
+                      {option.previewType === 'champagne' && (
+                        <div className="w-full h-8 rounded-2xl bg-gradient-to-b from-[#1c1712] to-[#100e0c] border border-[#383028] px-3 flex items-center justify-between relative shadow-xl overflow-hidden">
+                          <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#dfba89]/80 to-transparent" />
+                          <div className="flex gap-2">
+                            <div className="w-3.5 h-3.5 rounded bg-[#dfba89]/30" />
+                            <div className="w-3.5 h-3.5 rounded bg-[#756758]/40" />
+                          </div>
+                          <div className="w-6 h-6 rounded-xl bg-gradient-to-br from-[#dfba89] via-[#c59868] to-[#966436] -mt-2.5 border border-[#fff2df] shadow-md flex items-center justify-center text-[9px] text-[#12100e] font-black">
+                            +
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="w-3.5 h-3.5 rounded bg-[#756758]/40" />
+                            <div className="w-3.5 h-3.5 rounded bg-[#756758]/40" />
                           </div>
                         </div>
                       )}
@@ -314,11 +308,11 @@ export default function BottomNavCustomizerModal() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#dfba89]" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#f6f2ec]">
-                  Atmospheric Backlight & Glow Effect
+                  Atmospheric Glow & Halo Intensity
                 </h4>
               </div>
               <p className="text-[11px] text-[#a89682] mt-0.5">
-                Controls the luminous titanium ambient halo radiating around the center action button.
+                Adjusts the radiant gold halo beam emanating from the floating orb.
               </p>
             </div>
 
@@ -326,7 +320,7 @@ export default function BottomNavCustomizerModal() {
               {[
                 { id: 'neon', label: 'Neon Halo', tag: 'Radiant', desc: 'Vibrant gold aura' },
                 { id: 'soft', label: 'Subtle Warm', tag: 'Gentle', desc: 'Soft ambient light' },
-                { id: 'none', label: 'Crisp Flat', tag: 'Zero Glow', desc: 'Clean high-contrast' },
+                { id: 'none', label: 'Crisp Flat', tag: 'Zero Glow', desc: 'Clean contrast' },
               ].map((glow) => (
                 <button
                   key={glow.id}
@@ -348,17 +342,17 @@ export default function BottomNavCustomizerModal() {
             </div>
           </div>
 
-          {/* Section 3: Label Visibility */}
+          {/* Section 3: Label Display Preference */}
           <div className="p-4 rounded-2xl bg-[#141210] border border-[#383028] space-y-4">
             <div>
               <div className="flex items-center gap-2">
                 <Eye className="w-4 h-4 text-[#dfba89]" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#f6f2ec]">
-                  Label Display Preference
+                  Label Preference
                 </h4>
               </div>
               <p className="text-[11px] text-[#a89682] mt-0.5">
-                Choose whether navigation titles are always visible, visible only on active tabs, or hidden for icons-only.
+                Control text visibility underneath icons on the floating glass dock.
               </p>
             </div>
 
@@ -394,7 +388,7 @@ export default function BottomNavCustomizerModal() {
             onClick={() => setIsNavCustomizerOpen(false)}
             className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-black text-xs uppercase tracking-wider shadow-lg shadow-[#dfba89]/25 transition cursor-pointer active:scale-95"
           >
-            Apply & Continue Browsing
+            Apply & Enjoy Floating Island
           </button>
         </div>
       </div>
