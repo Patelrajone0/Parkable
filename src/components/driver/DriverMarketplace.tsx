@@ -20,7 +20,9 @@ import {
   ChevronUp,
   Map,
   EyeOff,
-  X
+  X,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 
 interface DriverMarketplaceProps {
@@ -48,6 +50,7 @@ export default function DriverMarketplace({
   } = useApp();
 
   const [isMapCollapsed, setIsMapCollapsed] = useState(false);
+  const [isMapMaximized, setIsMapMaximized] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
@@ -87,7 +90,7 @@ export default function DriverMarketplace({
       <div className="flex-1 flex flex-col lg:flex-row-reverse min-h-0 mt-4 max-w-7xl mx-auto w-full px-3 sm:px-6 pb-20 md:pb-8 gap-5 items-start">
         
         {/* LIMITED SPACE MAP CONTAINER */}
-        <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 lg:sticky lg:top-20 z-10 transition-all duration-300">
+        <div className={`w-full ${isMapMaximized ? 'lg:w-[500px] xl:w-[560px]' : 'lg:w-[380px] xl:w-[420px]'} shrink-0 lg:sticky lg:top-20 z-10 transition-all duration-300`}>
           {isMapCollapsed ? (
             <div className="w-full bg-[#181512] rounded-2xl p-3 border border-[#383028] shadow-lg flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-bold text-[#f6f2ec]">
@@ -105,7 +108,7 @@ export default function DriverMarketplace({
               </button>
             </div>
           ) : (
-            <div className="w-full h-[220px] sm:h-[260px] lg:h-[460px] lg:max-h-[calc(100vh-140px)] bg-[#141210] rounded-3xl overflow-hidden border border-[#383028] shadow-2xl relative">
+            <div className={`w-full ${isMapMaximized ? 'h-[380px] sm:h-[460px] lg:h-[580px]' : 'h-[220px] sm:h-[260px] lg:h-[460px]'} lg:max-h-[calc(100vh-140px)] bg-[#141210] rounded-3xl overflow-hidden border border-[#383028] shadow-2xl relative transition-all duration-300`}>
               <ParkingMap
                 spots={filteredSpots}
                 selectedSpot={selectedSpot}
@@ -117,15 +120,34 @@ export default function DriverMarketplace({
                 userLocation={userLiveLocation}
               />
 
-              {/* Minimize Map Action */}
-              <div className="absolute top-3 right-3 z-[400] flex items-center gap-1.5">
+              {/* Map Window Controls: Maximize/Restore & Minimize (Safe distance to the left of zoom + and - buttons) */}
+              <div className="absolute top-3 right-16 sm:right-18 z-[400] flex items-center bg-[#141210]/95 backdrop-blur-md p-1 rounded-xl border border-[#383028] shadow-xl text-[10px] font-semibold text-[#a89682]">
+                <button
+                  type="button"
+                  onClick={() => setIsMapMaximized(!isMapMaximized)}
+                  className="px-2 py-1 rounded-lg hover:text-[#f6f2ec] hover:bg-[#201b16] transition flex items-center gap-1 cursor-pointer"
+                  title={isMapMaximized ? 'Restore default map size' : 'Maximize map size'}
+                >
+                  {isMapMaximized ? (
+                    <>
+                      <Minimize2 className="w-3.5 h-3.5 text-[#dfba89]" />
+                      <span className="hidden sm:inline">Restore</span>
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="w-3.5 h-3.5 text-[#dfba89]" />
+                      <span className="hidden sm:inline">Maximize</span>
+                    </>
+                  )}
+                </button>
+                <div className="w-px h-3.5 bg-[#383028]" />
                 <button
                   type="button"
                   onClick={() => setIsMapCollapsed(true)}
-                  className="px-2.5 py-1 rounded-xl bg-[#141210]/95 backdrop-blur-md text-[#a89682] hover:text-[#f6f2ec] hover:bg-[#201b16] border border-[#383028] text-[10px] font-bold flex items-center gap-1 shadow-md transition cursor-pointer"
-                  title="Minimize map to view more parking spots"
+                  className="px-2 py-1 rounded-lg hover:text-[#f6f2ec] hover:bg-[#201b16] transition flex items-center gap-1 cursor-pointer"
+                  title="Minimize map to view parking spots list"
                 >
-                  <EyeOff className="w-3 h-3 text-[#dfba89]" />
+                  <EyeOff className="w-3.5 h-3.5 text-[#dfba89]" />
                   <span className="hidden sm:inline">Minimize</span>
                 </button>
               </div>
