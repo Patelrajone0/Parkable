@@ -39,6 +39,7 @@ export default function DriverMarketplace({
     userLiveLocation,
     setSearchFilters,
     setIsListSpotOpen,
+    seedDemoSpotsAroundLocation,
   } = useApp();
 
   return (
@@ -154,7 +155,7 @@ export default function DriverMarketplace({
         {/* REST OF THE AREA: EXPANSIVE PARKING SPACES LISTING GRID */}
         <div className="flex-1 min-w-0 w-full space-y-4">
           {/* Header Banner */}
-          <div className="p-3 bg-[#181512] rounded-2xl border border-[#383028] shadow-xs flex items-center justify-between gap-2">
+          <div className="p-3 bg-[#181512] rounded-2xl border border-[#383028] shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-black text-[#f6f2ec]">
@@ -168,6 +169,19 @@ export default function DriverMarketplace({
                 Displaying verified private parking spaces across the area
               </p>
             </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => seedDemoSpotsAroundLocation()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#241f1a] hover:bg-[#2f2720] text-[#dfba89] border border-[#dfba89]/30 hover:border-[#dfba89]/60 text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Add or refresh demo parking spaces around your location"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#dfba89]" />
+                <span className="hidden sm:inline">Demo Spots Around Me</span>
+                <span className="sm:hidden">Demo Spots</span>
+              </button>
+            </div>
           </div>
 
           {/* Empty State */}
@@ -179,34 +193,52 @@ export default function DriverMarketplace({
               </h4>
               <p className="text-xs text-[#a89682] max-w-sm mx-auto mt-1 mb-4">
                 {spots.length === 0
-                  ? 'There are currently no parking spaces listed on ParkEase. Be the first to monetize an idle driveway or spot!'
-                  : 'Try widening your vehicle size filter or resetting your search filters to view all city locations.'}
+                  ? 'There are currently no parking spaces listed on ParkEase. Spawn instant demo parking spots near your location to test all features!'
+                  : 'Try widening your vehicle size filter or resetting your search filters to view all nearby locations.'}
               </p>
               {spots.length === 0 ? (
-                <button
-                  onClick={() => setIsListSpotOpen(true)}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 transition cursor-pointer"
-                >
-                  List a Parking Space
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={() => seedDemoSpotsAroundLocation()}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 transition cursor-pointer flex items-center gap-2"
+                  >
+                    <MapPin className="w-4 h-4 text-[#12100e]" />
+                    <span>Add Demo Spots Around Me</span>
+                  </button>
+                  <button
+                    onClick={() => setIsListSpotOpen(true)}
+                    className="px-4 py-2.5 rounded-xl bg-[#241f1a] hover:bg-[#2c2620] text-[#f6f2ec] border border-[#383028] font-bold text-xs transition cursor-pointer"
+                  >
+                    List a Parking Space
+                  </button>
+                </div>
               ) : (
-                <button
-                  onClick={() =>
-                    setSearchFilters({
-                      destination: '',
-                      vehicle_size: 'all',
-                      space_type: 'all',
-                      duration_hours: 2,
-                      has_ev: false,
-                      has_cctv: false,
-                      has_guard: false,
-                      is_covered: false,
-                    })
-                  }
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 cursor-pointer"
-                >
-                  Reset All Filters
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={() =>
+                      setSearchFilters({
+                        destination: '',
+                        vehicle_size: 'all',
+                        space_type: 'all',
+                        duration_hours: 2,
+                        has_ev: false,
+                        has_cctv: false,
+                        has_guard: false,
+                        is_covered: false,
+                      })
+                    }
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] to-[#b37d4e] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 cursor-pointer"
+                  >
+                    Reset All Filters
+                  </button>
+                  <button
+                    onClick={() => seedDemoSpotsAroundLocation()}
+                    className="px-4 py-2 rounded-xl bg-[#241f1a] hover:bg-[#2c2620] text-[#dfba89] border border-[#dfba89]/30 font-bold text-xs transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-[#dfba89]" />
+                    <span>Re-seed Spots Around Me</span>
+                  </button>
+                </div>
               )}
             </div>
           ) : (

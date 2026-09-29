@@ -11,7 +11,8 @@ import {
   ShieldCheck, 
   Clock, 
   X,
-  Filter
+  Filter,
+  Compass
 } from 'lucide-react';
 import { VehicleSize, SpaceType } from '@/types';
 
@@ -29,6 +30,8 @@ export default function SearchBar() {
     setSearchFilters,
     setMapCenter,
     setMapZoom,
+    requestLiveLocation,
+    isLocating,
     addToast,
   } = useApp();
 
@@ -75,20 +78,34 @@ export default function SearchBar() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search destination, area, or landmark..."
-            className="w-full pl-11 pr-10 py-3 bg-[#100e0d] hover:bg-[#14120f] focus:bg-[#100e0d] text-[#f6f2ec] text-sm font-medium rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60 focus:border-transparent placeholder-[#756758] transition"
+            className="w-full pl-11 pr-20 py-3 bg-[#100e0d] hover:bg-[#14120f] focus:bg-[#100e0d] text-[#f6f2ec] text-sm font-medium rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60 focus:border-transparent placeholder-[#756758] transition"
           />
-          {searchInput && (
+          <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput('');
+                  setSearchFilters((prev) => ({ ...prev, destination: '' }));
+                }}
+                className="p-1 text-[#756758] hover:text-[#f6f2ec] transition cursor-pointer"
+                title="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
-                setSearchInput('');
-                setSearchFilters((prev) => ({ ...prev, destination: '' }));
+                requestLiveLocation();
+                addToast('Locating...', 'Fetching your live GPS location', 'info');
               }}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#756758] hover:text-[#f6f2ec]"
+              className="p-1.5 rounded-lg text-[#dfba89] hover:bg-[#221c17] transition cursor-pointer"
+              title="Use current live location"
             >
-              <X className="w-4 h-4" />
+              <Compass className={`w-4 h-4 ${isLocating ? 'animate-spin' : ''}`} />
             </button>
-          )}
+          </div>
         </div>
 
         {/* Vehicle Size Quick Dropdown */}

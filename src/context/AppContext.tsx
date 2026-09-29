@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { ParkingSpot, Booking, UserProfile, UserRole, SearchFilterState } from '@/types';
-import { INITIAL_SPOTS, INITIAL_BOOKINGS } from '@/data/initialData';
+import { INITIAL_SPOTS, INITIAL_BOOKINGS, generateDemoSpotsAround } from '@/data/initialData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export interface ToastMessage {
@@ -32,6 +32,7 @@ interface AppContextType {
   deleteSpot: (id: string) => void;
   selectedSpot: ParkingSpot | null;
   setSelectedSpot: (spot: ParkingSpot | null) => void;
+  seedDemoSpotsAroundLocation: (lat?: number, lng?: number, areaName?: string) => void;
 
   // Bookings
   bookings: Booking[];
@@ -151,6 +152,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setMapCenter([coords.lat, coords.lng]);
           setMapZoom(14);
           setIsLocating(false);
+
+          // Dynamically reposition/generate demo spots around user's live coordinates
+          setSpots((currentSpots) => {
+            const userCustom = currentSpots.filter((s) => !s.id.startsWith('demo-'));
+            const updatedDemoSpots = generateDemoSpotsAround(coords.lat, coords.lng, 'Your Area');
+            const merged = [...updatedDemoSpots, ...userCustom];
+            try {
+              localStorage.setItem(STORAGE_KEY_SPOTS, JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
         },
         (err) => {
           setIsLocating(false);
@@ -184,24 +196,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (savedSpots) {
         try {
           const parsed = JSON.parse(savedSpots);
-          const demoIds = ['spot-1', 'spot-2', 'spot-3', 'spot-4', 'spot-5', 'spot-6'];
-          const cleanSpots = Array.isArray(parsed)
-            ? parsed.filter(
-                (s: ParkingSpot) =>
-                  !demoIds.includes(s.id) &&
-                  s.host_id !== 'user-host-1' &&
-                  s.host_id !== 'user-host-4' &&
-                  s.host_name !== 'Marcus Vance' &&
-                  s.host_name !== 'Vikram Mehta'
-              )
-            : [];
-          setSpots(cleanSpots);
-          localStorage.setItem(STORAGE_KEY_SPOTS, JSON.stringify(cleanSpots));
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSpots(parsed);
+          } else {
+            const initial = generateDemoSpotsAround(userLiveLocation.lat, userLiveLocation.lng, 'Nearby Area');
+            setSpots(initial);
+            localStorage.setItem(STORAGE_KEY_SPOTS, JSON.stringify(initial));
+          }
         } catch {
-          setSpots([]);
+          const initial = generateDemoSpotsAround(userLiveLocation.lat, userLiveLocation.lng, 'Nearby Area');
+          setSpots(initial);
         }
       } else {
-        setSpots([]);
+        const initial = generateDemoSpotsAround(userLiveLocation.lat, userLiveLocation.lng, 'Nearby Area');
+        setSpots(initial);
+        localStorage.setItem(STORAGE_KEY_SPOTS, JSON.stringify(initial));
       }
 
       // Filter out any legacy demo bookings
@@ -542,6 +551,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast('Listing Removed', 'The parking spot has been deleted.', 'info');
   };
 
+  const seedDemoSpotsAroundLocation = (targetLat?: number, targetLng?: number, areaName?: string) => {
+    const lat = targetLat ?? userLiveLocation.lat;
+    const lng = targetLng ?? userLiveLocation.lng;
+    const demoSpots = generateDemoSpotsAround(lat, lng, areaName || 'Your Location');
+    setSpots((prev) => {
+      const userCustom = prev.filter((s) => !s.id.startsWith('demo-'));
+      const combined = [...demoSpots, ...userCustom];
+      try {
+        localStorage.setItem(STORAGE_KEY_SPOTS, JSON.stringify(combined));
+      } catch {}
+      return combined;
+    });
+    setMapCenter([lat, lng]);
+    setMapZoom(14);
+    addToast('Demo Spots Ready! 📍', 'Added 6 available demo parking spots around your location for testing.', 'success');
+  };
+
   // Checkout trigger
   const openCheckout = (spot: ParkingSpot) => {
     setSelectedSpot(spot);
@@ -740,6 +766,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         userLiveLocation,
         requestLiveLocation,
+        seedDemoSpotsAroundLocation,
         isLocating,
         onlyNearestChargers,
         setOnlyNearestChargers,
