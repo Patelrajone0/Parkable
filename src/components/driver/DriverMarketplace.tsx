@@ -108,49 +108,61 @@ export default function DriverMarketplace({
               </button>
             </div>
           ) : (
-            <div className={`w-full ${isMapMaximized ? 'h-[380px] sm:h-[460px] lg:h-[580px]' : 'h-[220px] sm:h-[260px] lg:h-[460px]'} lg:max-h-[calc(100vh-140px)] bg-[#141210] rounded-3xl overflow-hidden border border-[#383028] shadow-2xl relative transition-all duration-300`}>
-              <ParkingMap
-                spots={filteredSpots}
-                selectedSpot={selectedSpot}
-                onSelectSpot={(spot) => {
-                  setSelectedSpot(spot);
-                }}
-                center={mapCenter}
-                zoom={mapZoom}
-                userLocation={userLiveLocation}
-              />
+            <div className="w-full bg-[#141210] rounded-3xl overflow-hidden border border-[#383028] shadow-2xl flex flex-col transition-all duration-300">
+              {/* Dedicated Map Card Header: Keeps Maximize/Minimize completely separated from map controls */}
+              <div className="px-3.5 py-2 bg-[#181512] border-b border-[#2c251e] flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#f6f2ec]">
+                  <Map className="w-3.5 h-3.5 text-[#dfba89]" />
+                  <span>Interactive Map</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-[#241f1a] text-[#dfba89] rounded-md font-semibold border border-[#383028]">
+                    {filteredSpots.length} spots
+                  </span>
+                </div>
 
-              {/* Map Window Controls: Maximize/Restore & Minimize (Safe distance to the left of zoom + and - buttons) */}
-              <div className="absolute top-3 right-16 sm:right-18 z-[400] flex items-center bg-[#141210]/95 backdrop-blur-md p-1 rounded-xl border border-[#383028] shadow-xl text-[10px] font-semibold text-[#a89682]">
-                <button
-                  type="button"
-                  onClick={() => setIsMapMaximized(!isMapMaximized)}
-                  className="px-2 py-1 rounded-lg hover:text-[#f6f2ec] hover:bg-[#201b16] transition flex items-center gap-1 cursor-pointer"
-                  title={isMapMaximized ? 'Restore default map size' : 'Maximize map size'}
-                >
-                  {isMapMaximized ? (
-                    <>
-                      <Minimize2 className="w-3.5 h-3.5 text-[#dfba89]" />
-                      <span className="hidden sm:inline">Restore</span>
-                    </>
-                  ) : (
-                    <>
-                      <Maximize2 className="w-3.5 h-3.5 text-[#dfba89]" />
-                      <span className="hidden sm:inline">Maximize</span>
-                    </>
-                  )}
-                </button>
-                <div className="w-px h-3.5 bg-[#383028]" />
-                <button
-                  type="button"
-                  onClick={() => setIsMapCollapsed(true)}
-                  className="px-2 py-1 rounded-lg hover:text-[#f6f2ec] hover:bg-[#201b16] transition flex items-center gap-1 cursor-pointer"
-                  title="Minimize map to view parking spots list"
-                >
-                  <EyeOff className="w-3.5 h-3.5 text-[#dfba89]" />
-                  <span className="hidden sm:inline">Minimize</span>
-                </button>
+                {/* Window Actions: Maximize / Restore & Minimize */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsMapMaximized(!isMapMaximized)}
+                    className="px-2.5 py-1 rounded-xl bg-[#241f1a] hover:bg-[#2e2620] text-[#c2b29d] hover:text-[#f6f2ec] border border-[#383028] text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    title={isMapMaximized ? 'Restore default map size' : 'Maximize map size'}
+                  >
+                    {isMapMaximized ? (
+                      <>
+                        <Minimize2 className="w-3 h-3 text-[#dfba89]" />
+                        <span>Restore</span>
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 className="w-3 h-3 text-[#dfba89]" />
+                        <span>Maximize</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMapCollapsed(true)}
+                    className="px-2.5 py-1 rounded-xl bg-[#241f1a] hover:bg-[#2e2620] text-[#c2b29d] hover:text-[#f6f2ec] border border-[#383028] text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    title="Minimize map to view parking spots list"
+                  >
+                    <EyeOff className="w-3 h-3 text-[#dfba89]" />
+                    <span>Minimize</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Map Canvas: Full width available for Dark/Streets/Satellite and Leaflet Zoom buttons */}
+              <div className={`w-full ${isMapMaximized ? 'h-[380px] sm:h-[460px] lg:h-[580px]' : 'h-[220px] sm:h-[260px] lg:h-[430px]'} lg:max-h-[calc(100vh-180px)] relative transition-all duration-300`}>
+                <ParkingMap
+                  spots={filteredSpots}
+                  selectedSpot={selectedSpot}
+                  onSelectSpot={(spot) => {
+                    setSelectedSpot(spot);
+                  }}
+                  center={mapCenter}
+                  zoom={mapZoom}
+                  userLocation={userLiveLocation}
+                />
 
               {/* Floating Selected Spot Preview Card on Map */}
               {selectedSpot && (
@@ -222,7 +234,8 @@ export default function DriverMarketplace({
                 </div>
               )}
             </div>
-          )}
+          </div>
+        )}
         </div>
 
         {/* REST OF THE AREA: EXPANSIVE PARKING SPACES LISTING GRID */}
