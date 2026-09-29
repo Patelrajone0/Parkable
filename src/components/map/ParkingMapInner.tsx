@@ -339,11 +339,10 @@ export default function ParkingMapInner({
   }, [spots, selectedSpot, onSelectSpot]);
 
   return (
-    <div className="absolute inset-0 w-full h-full min-h-[350px]">
+    <div className="absolute inset-0 w-full h-full min-h-0">
       <div 
         ref={mapContainerRef} 
-        className="w-full h-full"
-        style={{ minHeight: '350px' }}
+        className="w-full h-full min-h-0"
       />
 
       {/* Map Type Switcher Floating Control */}

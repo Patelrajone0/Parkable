@@ -15,7 +15,12 @@ import {
   ChevronRight, 
   Sparkles,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronDown,
+  ChevronUp,
+  Map,
+  EyeOff,
+  X
 } from 'lucide-react';
 
 interface DriverMarketplaceProps {
@@ -41,6 +46,8 @@ export default function DriverMarketplace({
     setIsListSpotOpen,
     seedDemoSpotsAroundLocation,
   } = useApp();
+
+  const [isMapCollapsed, setIsMapCollapsed] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
@@ -76,80 +83,124 @@ export default function DriverMarketplace({
         )}
       </div>
 
-      {/* Main Content Area: Fixed Square Map on Side + Parking Spaces filling the Rest */}
+      {/* Main Content Area: Limited Map on Side + Parking Spaces filling the Rest */}
       <div className="flex-1 flex flex-col lg:flex-row-reverse min-h-0 mt-4 max-w-7xl mx-auto w-full px-3 sm:px-6 pb-20 md:pb-8 gap-5 items-start">
         
-        {/* FIXED SQUARE MAP CONTAINER */}
-        <div className="w-full lg:w-[420px] xl:w-[460px] shrink-0 lg:sticky lg:top-20 z-10">
-          <div className="w-full aspect-square bg-[#141210] rounded-3xl overflow-hidden border border-[#383028] shadow-2xl relative">
-            <ParkingMap
-              spots={filteredSpots}
-              selectedSpot={selectedSpot}
-              onSelectSpot={(spot) => {
-                setSelectedSpot(spot);
-              }}
-              center={mapCenter}
-              zoom={mapZoom}
-              userLocation={userLiveLocation}
-            />
+        {/* LIMITED SPACE MAP CONTAINER */}
+        <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 lg:sticky lg:top-20 z-10 transition-all duration-300">
+          {isMapCollapsed ? (
+            <div className="w-full bg-[#181512] rounded-2xl p-3 border border-[#383028] shadow-lg flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#f6f2ec]">
+                <Map className="w-4 h-4 text-[#dfba89]" />
+                <span>Map Minimized</span>
+                <span className="text-[10px] text-[#a89682]">({filteredSpots.length} pins)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMapCollapsed(false)}
+                className="px-3 py-1 rounded-xl bg-[#241f1a] hover:bg-[#2e2620] text-[#dfba89] border border-[#dfba89]/30 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+              >
+                <span>Expand Map</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="w-full h-[220px] sm:h-[260px] lg:h-[460px] lg:max-h-[calc(100vh-140px)] bg-[#141210] rounded-3xl overflow-hidden border border-[#383028] shadow-2xl relative">
+              <ParkingMap
+                spots={filteredSpots}
+                selectedSpot={selectedSpot}
+                onSelectSpot={(spot) => {
+                  setSelectedSpot(spot);
+                }}
+                center={mapCenter}
+                zoom={mapZoom}
+                userLocation={userLiveLocation}
+              />
 
-            {/* Floating Selected Spot Preview Card on Map */}
-            {selectedSpot && (
-              <div className="absolute bottom-3 left-3 right-3 z-20 bg-[#181512]/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-[#383028] animate-in slide-in-from-bottom duration-200">
-                <div className="flex items-start gap-2.5">
-                  {selectedSpot.photos && selectedSpot.photos.length > 0 ? (
-                    <img
-                      src={selectedSpot.photos[0]}
-                      alt=""
-                      className="w-14 h-14 rounded-xl object-cover shrink-0 border border-[#383028]"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 rounded-xl shrink-0 border border-[#383028] bg-[#100e0d] flex items-center justify-center text-[#dfba89]">
-                      <Car className="w-6 h-6 opacity-80" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h5 className="font-bold text-xs text-[#f6f2ec] truncate">
-                      {selectedSpot.title}
-                    </h5>
-                    <p className="text-[10px] text-[#a89682] truncate mt-0.5">
-                      {selectedSpot.address}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-xs font-black text-[#dfba89]">
-                        ₹{selectedSpot.hourly_rate}/hr
-                      </span>
-                      {selectedSpot.distance_km !== undefined && (
-                        <span className="text-[9px] font-bold text-[#dfba89] bg-[#241f1a] border border-[#dfba89]/30 px-1.5 py-0.5 rounded">
-                          📍 {selectedSpot.distance_km} km
+              {/* Minimize Map Action */}
+              <div className="absolute top-3 right-3 z-[400] flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsMapCollapsed(true)}
+                  className="px-2.5 py-1 rounded-xl bg-[#141210]/95 backdrop-blur-md text-[#a89682] hover:text-[#f6f2ec] hover:bg-[#201b16] border border-[#383028] text-[10px] font-bold flex items-center gap-1 shadow-md transition cursor-pointer"
+                  title="Minimize map to view more parking spots"
+                >
+                  <EyeOff className="w-3 h-3 text-[#dfba89]" />
+                  <span className="hidden sm:inline">Minimize</span>
+                </button>
+              </div>
+
+              {/* Floating Selected Spot Preview Card on Map */}
+              {selectedSpot && (
+                <div className="absolute bottom-2 left-2 right-2 z-[410] bg-[#181512]/95 backdrop-blur-md rounded-2xl p-2.5 shadow-2xl border border-[#383028] animate-in slide-in-from-bottom duration-200">
+                  <div className="flex items-start gap-2.5">
+                    {selectedSpot.photos && selectedSpot.photos.length > 0 ? (
+                      <img
+                        src={selectedSpot.photos[0]}
+                        alt=""
+                        className="w-12 h-12 rounded-xl object-cover shrink-0 border border-[#383028]"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl shrink-0 border border-[#383028] bg-[#100e0d] flex items-center justify-center text-[#dfba89]">
+                        <Car className="w-5 h-5 opacity-80" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <h5 className="font-bold text-xs text-[#f6f2ec] truncate">
+                          {selectedSpot.title}
+                        </h5>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedSpot(null);
+                          }}
+                          className="text-[#a89682] hover:text-white p-0.5"
+                          title="Close preview"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-[#a89682] truncate mt-0.5">
+                        {selectedSpot.address}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-xs font-black text-[#dfba89]">
+                          ₹{selectedSpot.hourly_rate}/hr
                         </span>
-                      )}
-                      {selectedSpot.amenities.includes('ev_charging') && (
-                        <span className="text-[9px] font-bold text-[#dfba89]">
-                          ⚡ EV
-                        </span>
-                      )}
+                        {selectedSpot.distance_km !== undefined && (
+                          <span className="text-[9px] font-bold text-[#dfba89] bg-[#241f1a] border border-[#dfba89]/30 px-1.5 py-0.5 rounded">
+                            📍 {selectedSpot.distance_km} km
+                          </span>
+                        )}
+                        {selectedSpot.amenities.includes('ev_charging') && (
+                          <span className="text-[9px] font-bold text-[#dfba89]">
+                            ⚡ EV
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mt-2 pt-2 border-t border-[#2c251e] flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => onOpenBookingModal(selectedSpot)}
-                    className="text-[11px] font-bold text-[#a89682] hover:text-[#f6f2ec] transition"
-                  >
-                    View Details
-                  </button>
-                  <button
-                    onClick={() => openCheckout(selectedSpot)}
-                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 transition"
-                  >
-                    Book ₹{selectedSpot.hourly_rate}/hr
-                  </button>
+                  <div className="mt-2 pt-1.5 border-t border-[#2c251e] flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => onOpenBookingModal(selectedSpot)}
+                      className="text-[11px] font-bold text-[#a89682] hover:text-[#f6f2ec] transition"
+                    >
+                      View Details
+                    </button>
+                    <button
+                      onClick={() => openCheckout(selectedSpot)}
+                      className="px-3 py-1 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 transition"
+                    >
+                      Book ₹{selectedSpot.hourly_rate}/hr
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* REST OF THE AREA: EXPANSIVE PARKING SPACES LISTING GRID */}
@@ -171,6 +222,16 @@ export default function DriverMarketplace({
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsMapCollapsed(!isMapCollapsed)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#241f1a] hover:bg-[#2f2720] text-[#c2b29d] hover:text-[#f6f2ec] border border-[#383028] text-xs font-bold transition shadow-xs cursor-pointer"
+                title={isMapCollapsed ? 'Show map' : 'Hide map to view more parking spaces'}
+              >
+                <Map className="w-3.5 h-3.5 text-[#dfba89]" />
+                <span>{isMapCollapsed ? 'Show Map' : 'Hide Map'}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => seedDemoSpotsAroundLocation()}

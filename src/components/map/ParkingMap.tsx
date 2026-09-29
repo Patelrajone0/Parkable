@@ -20,7 +20,7 @@ interface ParkingMapProps {
 const DynamicMap = dynamic(() => import('./ParkingMapInner'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full min-h-[350px] bg-[#141210] flex flex-col items-center justify-center text-[#a89682] gap-3">
+    <div className="w-full h-full min-h-[160px] bg-[#141210] flex flex-col items-center justify-center text-[#a89682] gap-3">
       <Loader2 className="w-8 h-8 animate-spin text-[#dfba89]" />
       <span className="text-xs font-semibold tracking-wide text-[#dfba89]">Loading interactive satellite & street map...</span>
     </div>
@@ -29,7 +29,7 @@ const DynamicMap = dynamic(() => import('./ParkingMapInner'), {
 
 export default function ParkingMap(props: ParkingMapProps) {
   return (
-    <div className="w-full h-full relative min-h-[350px]">
+    <div className="w-full h-full relative min-h-0">
       <DynamicMap {...props} />
     </div>
   );
