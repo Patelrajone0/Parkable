@@ -51,11 +51,12 @@ export default function DriverMarketplace({
 
   const [isMapCollapsed, setIsMapCollapsed] = useState(false);
   const [isMapMaximized, setIsMapMaximized] = useState(false);
+  const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
       {/* Top Search & Filter Bar Container */}
-      <div className="z-20 px-3 sm:px-6 pt-3 sm:pt-4 max-w-7xl mx-auto w-full">
+      <div className="z-20 px-3 sm:px-6 pt-2.5 sm:pt-4 max-w-7xl mx-auto w-full">
         <SearchBar />
 
         {/* Active Booking Banner Alert (if driver has a live session) */}
@@ -86,11 +87,11 @@ export default function DriverMarketplace({
         )}
       </div>
 
-      {/* Main Content Area: Limited Map on Side + Parking Spaces filling the Rest */}
-      <div className="flex-1 flex flex-col lg:flex-row-reverse min-h-0 mt-4 max-w-7xl mx-auto w-full px-3 sm:px-6 pb-20 md:pb-8 gap-5 items-start">
+      {/* Main Content Area: Responsive Layout with Side-by-Side on Desktop and Tabbed/Pill on Mobile */}
+      <div className="flex-1 flex flex-col lg:flex-row-reverse min-h-0 mt-3 sm:mt-4 max-w-7xl mx-auto w-full px-3 sm:px-6 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:pb-8 gap-5 items-start">
         
-        {/* LIMITED SPACE MAP CONTAINER */}
-        <div className={`w-full ${isMapMaximized ? 'lg:w-[500px] xl:w-[560px]' : 'lg:w-[380px] xl:w-[420px]'} shrink-0 lg:sticky lg:top-20 z-10 transition-all duration-300`}>
+        {/* MAP CONTAINER: Full height on mobile map mode, sticky on desktop */}
+        <div className={`${mobileView === 'map' ? 'block' : 'hidden'} lg:block w-full ${isMapMaximized ? 'lg:w-[500px] xl:w-[560px]' : 'lg:w-[380px] xl:w-[420px]'} shrink-0 lg:sticky lg:top-20 z-10 transition-all duration-300`}>
           {isMapCollapsed ? (
             <div className="w-full bg-[#181512] rounded-2xl p-3 border border-[#383028] shadow-lg flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-bold text-[#f6f2ec]">
@@ -109,7 +110,7 @@ export default function DriverMarketplace({
             </div>
           ) : (
             <div className="w-full bg-[#141210] rounded-3xl overflow-hidden border border-[#383028] shadow-2xl flex flex-col transition-all duration-300">
-              {/* Dedicated Map Card Header: Keeps Maximize/Minimize completely separated from map controls */}
+              {/* Dedicated Map Card Header */}
               <div className="px-3.5 py-2 bg-[#181512] border-b border-[#2c251e] flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#f6f2ec]">
                   <Map className="w-3.5 h-3.5 text-[#dfba89]" />
@@ -119,12 +120,22 @@ export default function DriverMarketplace({
                   </span>
                 </div>
 
-                {/* Window Actions: Maximize / Restore & Minimize */}
+                {/* Window Actions */}
                 <div className="flex items-center gap-1.5">
+                  {/* Mobile Back to List Button */}
+                  <button
+                    type="button"
+                    onClick={() => setMobileView('list')}
+                    className="lg:hidden px-2.5 py-1 rounded-xl bg-[#241f1a] text-[#dfba89] border border-[#dfba89]/40 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <Layers className="w-3 h-3 text-[#dfba89]" />
+                    <span>View List</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setIsMapMaximized(!isMapMaximized)}
-                    className="px-2.5 py-1 rounded-xl bg-[#241f1a] hover:bg-[#2e2620] text-[#c2b29d] hover:text-[#f6f2ec] border border-[#383028] text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    className="hidden sm:flex px-2.5 py-1 rounded-xl bg-[#241f1a] hover:bg-[#2e2620] text-[#c2b29d] hover:text-[#f6f2ec] border border-[#383028] text-[10px] font-bold transition items-center gap-1 cursor-pointer"
                     title={isMapMaximized ? 'Restore default map size' : 'Maximize map size'}
                   >
                     {isMapMaximized ? (
@@ -142,7 +153,7 @@ export default function DriverMarketplace({
                   <button
                     type="button"
                     onClick={() => setIsMapCollapsed(true)}
-                    className="px-2.5 py-1 rounded-xl bg-[#241f1a] hover:bg-[#2e2620] text-[#c2b29d] hover:text-[#f6f2ec] border border-[#383028] text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    className="hidden lg:flex px-2.5 py-1 rounded-xl bg-[#241f1a] hover:bg-[#2e2620] text-[#c2b29d] hover:text-[#f6f2ec] border border-[#383028] text-[10px] font-bold transition items-center gap-1 cursor-pointer"
                     title="Minimize map to view parking spots list"
                   >
                     <EyeOff className="w-3 h-3 text-[#dfba89]" />
@@ -151,8 +162,8 @@ export default function DriverMarketplace({
                 </div>
               </div>
 
-              {/* Map Canvas: Full width available for Dark/Streets/Satellite and Leaflet Zoom buttons */}
-              <div className={`w-full ${isMapMaximized ? 'h-[380px] sm:h-[460px] lg:h-[580px]' : 'h-[220px] sm:h-[260px] lg:h-[430px]'} lg:max-h-[calc(100vh-180px)] relative transition-all duration-300`}>
+              {/* Map Canvas: Full responsive height on mobile */}
+              <div className={`w-full ${isMapMaximized ? 'h-[380px] sm:h-[460px] lg:h-[580px]' : 'h-[calc(100vh-250px)] sm:h-[300px] lg:h-[430px]'} lg:max-h-[calc(100vh-180px)] relative transition-all duration-300`}>
                 <ParkingMap
                   spots={filteredSpots}
                   selectedSpot={selectedSpot}
@@ -239,7 +250,7 @@ export default function DriverMarketplace({
         </div>
 
         {/* REST OF THE AREA: EXPANSIVE PARKING SPACES LISTING GRID */}
-        <div className="flex-1 min-w-0 w-full space-y-4">
+        <div className={`${mobileView === 'list' ? 'block' : 'hidden'} lg:block flex-1 min-w-0 w-full space-y-4`}>
           {/* Header Banner */}
           <div className="p-3 bg-[#181512] rounded-2xl border border-[#383028] shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -257,10 +268,21 @@ export default function DriverMarketplace({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Mobile Switch to Map Button */}
+              <button
+                type="button"
+                onClick={() => setMobileView('map')}
+                className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#241f1a] hover:bg-[#2f2720] text-[#dfba89] border border-[#dfba89]/30 text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Switch to Map view"
+              >
+                <Map className="w-3.5 h-3.5 text-[#dfba89]" />
+                <span>Map View</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setIsMapCollapsed(!isMapCollapsed)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#241f1a] hover:bg-[#2f2720] text-[#c2b29d] hover:text-[#f6f2ec] border border-[#383028] text-xs font-bold transition shadow-xs cursor-pointer"
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#241f1a] hover:bg-[#2f2720] text-[#c2b29d] hover:text-[#f6f2ec] border border-[#383028] text-xs font-bold transition shadow-xs cursor-pointer"
                 title={isMapCollapsed ? 'Show map' : 'Hide map to view more parking spaces'}
               >
                 <Map className="w-3.5 h-3.5 text-[#dfba89]" />
@@ -462,6 +484,27 @@ export default function DriverMarketplace({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Floating Map / List Toggle Button for Mobile Screens (Airbnb-style pill) */}
+      <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-30 lg:hidden pointer-events-auto">
+        <button
+          type="button"
+          onClick={() => setMobileView(mobileView === 'list' ? 'map' : 'list')}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#181512]/95 backdrop-blur-md border border-[#dfba89]/50 text-[#dfba89] font-black text-xs shadow-2xl shadow-black/90 hover:bg-[#221d18] active:scale-95 transition-all cursor-pointer"
+        >
+          {mobileView === 'list' ? (
+            <>
+              <Map className="w-4 h-4 text-[#dfba89]" />
+              <span>Map View ({filteredSpots.length})</span>
+            </>
+          ) : (
+            <>
+              <Layers className="w-4 h-4 text-[#dfba89]" />
+              <span>List View ({filteredSpots.length})</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

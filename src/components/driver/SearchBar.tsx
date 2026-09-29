@@ -65,51 +65,77 @@ export default function SearchBar() {
   };
 
   return (
-    <div className="w-full bg-[#181512] rounded-2xl shadow-xl shadow-black/50 border border-[#383028] p-3 sm:p-4 backdrop-blur-md">
+    <div className="w-full bg-[#181512] rounded-2xl sm:rounded-3xl shadow-xl shadow-black/50 border border-[#383028] p-2.5 sm:p-4 backdrop-blur-md">
       {/* Top search input row */}
       <form onSubmit={handleLocationSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-        {/* Search input with pin */}
-        <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#dfba89]">
-            <MapPin className="w-5 h-5" />
-          </div>
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search destination, area, or landmark..."
-            className="w-full pl-11 pr-20 py-3 bg-[#100e0d] hover:bg-[#14120f] focus:bg-[#100e0d] text-[#f6f2ec] text-sm font-medium rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60 focus:border-transparent placeholder-[#756758] transition"
-          />
-          <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
-            {searchInput && (
+        {/* Search input with pin and action buttons */}
+        <div className="flex items-center gap-1.5 flex-1">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#dfba89]">
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            </div>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search area, landmark..."
+              className="w-full pl-9 sm:pl-11 pr-16 sm:pr-20 py-2.5 sm:py-3 bg-[#100e0d] hover:bg-[#14120f] focus:bg-[#100e0d] text-[#f6f2ec] text-xs sm:text-sm font-medium rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60 focus:border-transparent placeholder-[#756758] transition"
+            />
+            <div className="absolute inset-y-0 right-0 pr-1.5 flex items-center gap-0.5">
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput('');
+                    setSearchFilters((prev) => ({ ...prev, destination: '' }));
+                  }}
+                  className="p-1 text-[#756758] hover:text-[#f6f2ec] transition cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
-                  setSearchInput('');
-                  setSearchFilters((prev) => ({ ...prev, destination: '' }));
+                  requestLiveLocation();
+                  addToast('Locating...', 'Fetching your live GPS location', 'info');
                 }}
-                className="p-1 text-[#756758] hover:text-[#f6f2ec] transition cursor-pointer"
-                title="Clear search"
+                className="p-1 sm:p-1.5 rounded-lg text-[#dfba89] hover:bg-[#221c17] transition cursor-pointer"
+                title="Use current live location"
               >
-                <X className="w-4 h-4" />
+                <Compass className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLocating ? 'animate-spin' : ''}`} />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                requestLiveLocation();
-                addToast('Locating...', 'Fetching your live GPS location', 'info');
-              }}
-              className="p-1.5 rounded-lg text-[#dfba89] hover:bg-[#221c17] transition cursor-pointer"
-              title="Use current live location"
-            >
-              <Compass className={`w-4 h-4 ${isLocating ? 'animate-spin' : ''}`} />
-            </button>
+            </div>
           </div>
+
+          {/* Quick Filters Toggle on Mobile */}
+          <button
+            type="button"
+            onClick={() => setIsFilterDrawerOpen(!isFilterDrawerOpen)}
+            className={`sm:hidden p-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-center shrink-0 ${
+              isFilterDrawerOpen || searchFilters.has_ev || searchFilters.is_covered || searchFilters.has_cctv || searchFilters.space_type !== 'all' || searchFilters.vehicle_size !== 'all'
+                ? 'bg-[#dfba89] text-[#12100e] border-[#dfba89] shadow-sm'
+                : 'border-[#383028] bg-[#1c1814] text-[#d6c7b2]'
+            }`}
+            title="Toggle filters"
+            aria-label="Toggle filters"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+          </button>
+
+          {/* Search Submit button on Mobile */}
+          <button
+            type="submit"
+            className="sm:hidden px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] text-[#12100e] font-bold text-xs shadow-md transition flex items-center justify-center shrink-0"
+            aria-label="Search"
+          >
+            <Search className="w-4 h-4 text-[#12100e]" />
+          </button>
         </div>
 
-        {/* Vehicle Size Quick Dropdown */}
-        <div className="shrink-0">
+        {/* Vehicle Size Dropdown (Visible on Desktop / Tablets) */}
+        <div className="hidden sm:block shrink-0">
           <select
             value={searchFilters.vehicle_size}
             onChange={(e) =>
@@ -118,42 +144,131 @@ export default function SearchBar() {
                 vehicle_size: e.target.value as VehicleSize | 'all',
               }))
             }
-            className="w-full sm:w-auto px-3.5 py-3 rounded-xl border border-[#383028] bg-[#100e0d] hover:bg-[#14120f] text-[#f6f2ec] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60 transition cursor-pointer"
+            className="w-auto px-3.5 py-3 rounded-xl border border-[#383028] bg-[#100e0d] hover:bg-[#14120f] text-[#f6f2ec] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60 transition cursor-pointer"
           >
             <option value="all" className="bg-[#181512] text-[#f6f2ec]">🚗 Any Vehicle Size</option>
             <option value="2-wheeler" className="bg-[#181512] text-[#f6f2ec]">🏍️ 2-Wheeler (Bike / Scooter)</option>
             <option value="hatchback" className="bg-[#181512] text-[#f6f2ec]">🚙 Hatchback (Swift, i20)</option>
             <option value="compact-suv" className="bg-[#181512] text-[#f6f2ec]">🚘 Compact SUV (Creta, Seltos)</option>
-            <option value="large-suv" className="bg-[#181512] text-[#f6f2ec]">🚐 Large SUV / Pickup (Fortuner, Truck)</option>
+            <option value="large-suv" className="bg-[#181512] text-[#f6f2ec]">🚐 Large SUV (Fortuner, Truck)</option>
           </select>
         </div>
 
-        {/* Filters Toggle Button */}
+        {/* Filters Toggle Button (Desktop) */}
         <button
           type="button"
           onClick={() => setIsFilterDrawerOpen(!isFilterDrawerOpen)}
-          className={`shrink-0 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-xs font-bold transition ${
-            isFilterDrawerOpen || searchFilters.has_ev || searchFilters.is_covered || searchFilters.has_cctv || searchFilters.space_type !== 'all'
+          className={`hidden sm:flex shrink-0 items-center justify-center gap-2 px-4 py-3 rounded-xl border text-xs font-bold transition ${
+            isFilterDrawerOpen || searchFilters.has_ev || searchFilters.is_covered || searchFilters.has_cctv || searchFilters.space_type !== 'all' || searchFilters.vehicle_size !== 'all'
               ? 'bg-[#dfba89] text-[#12100e] border-[#dfba89] shadow-sm'
               : 'border-[#383028] bg-[#1c1814] text-[#d6c7b2] hover:bg-[#25201a]'
           }`}
         >
           <SlidersHorizontal className="w-4 h-4" />
           <span>Filters</span>
-          {(searchFilters.has_ev || searchFilters.is_covered || searchFilters.has_cctv || searchFilters.space_type !== 'all') && (
+          {(searchFilters.has_ev || searchFilters.is_covered || searchFilters.has_cctv || searchFilters.space_type !== 'all' || searchFilters.vehicle_size !== 'all') && (
             <span className="w-2 h-2 rounded-full bg-[#12100e]"></span>
           )}
         </button>
 
-        {/* Search Submit button */}
+        {/* Search Submit button (Desktop) */}
         <button
           type="submit"
-          className="shrink-0 px-5 py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold shadow-md shadow-[#dfba89]/25 hover:shadow-lg transition flex items-center justify-center gap-1.5"
+          className="hidden sm:flex shrink-0 px-5 py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold shadow-md shadow-[#dfba89]/25 hover:shadow-lg transition items-center justify-center gap-1.5"
         >
           <Search className="w-4 h-4 text-[#12100e]" />
           <span>Search</span>
         </button>
       </form>
+
+      {/* Mobile Horizontal Quick-Filter Chips: Fast 1-Tap Filtering for Phones */}
+      <div className="flex sm:hidden items-center gap-1.5 mt-2 pt-2 border-t border-[#2a231b] overflow-x-auto no-scrollbar pb-0.5">
+        <button
+          type="button"
+          onClick={() =>
+            setSearchFilters((prev) => ({
+              ...prev,
+              vehicle_size: 'all',
+              space_type: 'all',
+              has_ev: false,
+              is_covered: false,
+            }))
+          }
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition ${
+            searchFilters.vehicle_size === 'all' && !searchFilters.has_ev && !searchFilters.is_covered
+              ? 'bg-[#dfba89] text-[#12100e]'
+              : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
+          }`}
+        >
+          All Spots
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setSearchFilters((prev) => ({
+              ...prev,
+              vehicle_size: prev.vehicle_size === '2-wheeler' ? 'all' : '2-wheeler',
+            }))
+          }
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
+            searchFilters.vehicle_size === '2-wheeler'
+              ? 'bg-[#dfba89] text-[#12100e]'
+              : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
+          }`}
+        >
+          <span>🏍️</span>
+          <span>2-Wheeler</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setSearchFilters((prev) => ({
+              ...prev,
+              vehicle_size: prev.vehicle_size === 'compact-suv' ? 'all' : 'compact-suv',
+            }))
+          }
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
+            searchFilters.vehicle_size === 'compact-suv'
+              ? 'bg-[#dfba89] text-[#12100e]'
+              : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
+          }`}
+        >
+          <span>🚙</span>
+          <span>SUV</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setSearchFilters((prev) => ({ ...prev, has_ev: !prev.has_ev }))
+          }
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
+            searchFilters.has_ev
+              ? 'bg-[#dfba89] text-[#12100e]'
+              : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
+          }`}
+        >
+          <Zap className="w-3 h-3" />
+          <span>EV Fast</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setSearchFilters((prev) => ({ ...prev, is_covered: !prev.is_covered }))
+          }
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
+            searchFilters.is_covered
+              ? 'bg-[#dfba89] text-[#12100e]'
+              : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
+          }`}
+        >
+          <span>☔</span>
+          <span>Covered</span>
+        </button>
+      </div>
 
       {/* Expanded Filter Panel */}
       {isFilterDrawerOpen && (

@@ -63,16 +63,16 @@ export default function HostDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 text-[#f6f2ec]">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-8 text-[#f6f2ec]">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#181512] via-[#201c18] to-[#2c231a] border border-[#383028] p-6 sm:p-8 rounded-3xl text-white shadow-2xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#181512] via-[#201c18] to-[#2c231a] border border-[#383028] p-4 sm:p-8 rounded-2xl sm:rounded-3xl text-white shadow-2xl">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#dfba89]/10 text-[#dfba89] text-xs font-bold uppercase tracking-wider border border-[#dfba89]/30">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#dfba89]/10 text-[#dfba89] text-[10px] sm:text-xs font-bold uppercase tracking-wider border border-[#dfba89]/30">
               Host Management Hub
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black mt-2 tracking-tight text-[#f6f2ec]">
+          <h1 className="text-xl sm:text-3xl font-black mt-2 tracking-tight text-[#f6f2ec]">
             Welcome back, {currentUser?.name || 'Host'}!
           </h1>
           <p className="text-xs sm:text-sm text-[#a89682] mt-1 max-w-xl">
@@ -80,17 +80,17 @@ export default function HostDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <button
             onClick={() => setActiveRole('driver')}
-            className="px-4 py-3 rounded-2xl bg-[#1e1914] hover:bg-[#2c231a] text-[#dfba89] border border-[#383028] hover:border-[#dfba89]/40 font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 sm:py-3 rounded-2xl bg-[#1e1914] hover:bg-[#2c231a] text-[#dfba89] border border-[#383028] hover:border-[#dfba89]/40 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer"
           >
             <Compass className="w-4 h-4 text-[#dfba89]" />
             <span>View Driver Map</span>
           </button>
           <button
             onClick={() => setIsListSpotOpen(true)}
-            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-[#dfba89]/20 transition-all duration-200 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#dfba89]/20 transition-all duration-200 cursor-pointer"
           >
             <PlusCircle className="w-4 h-4 text-[#12100e]" />
             <span>List a New Spot</span>

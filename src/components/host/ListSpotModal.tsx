@@ -323,9 +323,9 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
   const estimatedMonthly = hostNetHourly * 4 * 30; // 4 hrs/day x 30 days
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-2xl bg-[#181512] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] border border-[#383028]"
+        className="relative w-full max-w-2xl bg-[#181512] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] border border-[#383028] animate-in slide-in-from-bottom duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -353,7 +353,7 @@ export default function ListSpotModal({ isOpen, onClose }: ListSpotModalProps) {
         </div>
 
         {/* Content Body: Express Method Only */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 text-[#f6f2ec] space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1rem))] text-[#f6f2ec] space-y-5">
           
           {/* Section 1: 1-Click Smart Presets */}
           <div>

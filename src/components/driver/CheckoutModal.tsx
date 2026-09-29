@@ -97,9 +97,9 @@ export default function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-lg bg-[#181512] rounded-3xl shadow-2xl overflow-hidden border border-[#383028] flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg bg-[#181512] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden border border-[#383028] flex flex-col max-h-[92vh] animate-in slide-in-from-bottom duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -233,7 +233,7 @@ export default function CheckoutModal({
           </div>
         ) : (
           /* Scrollable Form Body */
-          <form onSubmit={handlePayAndConfirm} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+          <form onSubmit={handlePayAndConfirm} className="flex-1 overflow-y-auto p-4 sm:p-6 pb-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1rem))] space-y-5">
           {/* Spot Summary Mini Card */}
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#201c18] border border-[#383028]">
             {spot.photos && spot.photos.length > 0 ? (

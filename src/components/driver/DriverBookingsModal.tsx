@@ -34,9 +34,9 @@ export default function DriverBookingsModal({
   const myBookings = bookings.filter((b) => b.driver_id === currentUser?.id);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-lg bg-[#181512] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-[#383028]"
+        className="relative w-full max-w-lg bg-[#181512] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-[#383028] animate-in slide-in-from-bottom duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -57,7 +57,7 @@ export default function DriverBookingsModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 pb-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1rem))] space-y-3">
           {myBookings.length === 0 ? (
             <div className="p-10 text-center text-[#a89682] text-xs">
               <Calendar className="w-10 h-10 text-[#756758] mx-auto mb-2" />

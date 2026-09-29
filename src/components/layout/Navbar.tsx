@@ -73,78 +73,83 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-[#141210]/95 backdrop-blur-md border-b border-[#2d2620] shadow-md shadow-black/40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        {/* Brand Logo & Refresh */}
-        <div className="flex items-center gap-3">
-          <Link 
-            href="/"
-            onClick={handleBrandClick}
-            title="Refresh Parkable"
-            className="flex items-center gap-3 cursor-pointer group select-none transition-opacity hover:opacity-95"
-          >
-            <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#dfba89]/40 bg-[#12100e] shadow-md shadow-[#dfba89]/20 group-hover:scale-105 transition-transform duration-200 shrink-0 flex items-center justify-center">
-              <img
-                src={getAssetUrl('/logos/shield-icon.jpg?v=2')}
-                alt="Parkable Logo"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <span className="font-black text-xl tracking-tight text-[#f6f2ec] group-hover:text-[#dfba89] transition block leading-tight">
-                Parkable
-              </span>
-              <p className="text-[11px] text-[#a89682] font-medium hidden sm:block leading-none mt-0.5">
-                Airbnb for Private Parking
-              </p>
-            </div>
-          </Link>
-        </div>
-
-        {/* Right Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Active Booking Live Indicator (for Drivers) */}
-          {activeDriverBooking && (
-            <button
-              onClick={onOpenActiveBooking}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#d4a373]/15 border border-[#d4a373]/40 text-[#dfba89] hover:bg-[#d4a373]/25 text-xs font-bold transition shadow-xs animate-pulse"
-              title="Click to view active parking countdown and directions"
+    <>
+      {/* Top Status Bar Cover: Prevents content from leaking into iOS Dynamic Island / Notch status bar */}
+      <div 
+        className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top,0px)] bg-[#141210] z-50 pointer-events-none" 
+        aria-hidden="true" 
+      />
+      <header className="sticky top-0 z-40 w-full bg-[#141210]/95 backdrop-blur-md border-b border-[#2d2620] shadow-md shadow-black/40 pt-[env(safe-area-inset-top,0px)] transition-all">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Brand Logo & Refresh */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <Link 
+              href="/"
+              onClick={handleBrandClick}
+              title="Refresh Parkable"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer group select-none transition-opacity hover:opacity-95"
             >
-              <div className="w-2 h-2 rounded-full bg-[#dfba89] animate-ping" />
-              <Clock className="w-3.5 h-3.5 text-[#dfba89]" />
-              <span className="hidden sm:inline">Active Parking</span>
-              <span className="text-[10px] font-mono bg-[#d4a373]/30 text-[#f3dfc6] px-1.5 py-0.5 rounded">
-                Live
-              </span>
-            </button>
-          )}
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-[#dfba89]/40 bg-[#12100e] shadow-md shadow-[#dfba89]/20 group-hover:scale-105 transition-transform duration-200 shrink-0 flex items-center justify-center">
+                <img
+                  src={getAssetUrl('/logos/shield-icon.jpg?v=2')}
+                  alt="Parkable Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <span className="font-black text-lg sm:text-xl tracking-tight text-[#f6f2ec] group-hover:text-[#dfba89] transition block leading-tight">
+                  Parkable
+                </span>
+                <p className="text-[10px] sm:text-[11px] text-[#a89682] font-medium hidden sm:block leading-none mt-0.5">
+                  Airbnb for Private Parking
+                </p>
+              </div>
+            </Link>
+          </div>
 
+          {/* Right Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Active Booking Live Indicator (for Drivers) */}
+            {activeDriverBooking && (
+              <button
+                onClick={onOpenActiveBooking}
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#d4a373]/15 border border-[#d4a373]/40 text-[#dfba89] hover:bg-[#d4a373]/25 text-xs font-bold transition shadow-xs animate-pulse"
+                title="Click to view active parking countdown and directions"
+              >
+                <div className="w-2 h-2 rounded-full bg-[#dfba89] animate-ping" />
+                <Clock className="w-3.5 h-3.5 text-[#dfba89]" />
+                <span className="hidden sm:inline">Active Parking</span>
+                <span className="text-[10px] font-mono bg-[#d4a373]/30 text-[#f3dfc6] px-1.5 py-0.5 rounded">
+                  Live
+                </span>
+              </button>
+            )}
 
-          {/* PWA Install / Open in App Button */}
-          {isInstalled ? (
-            <button
-              onClick={openInstallGuide}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 text-xs font-bold transition shadow-xs cursor-pointer"
-              title="Parkable is installed on your device (Click for app info)"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">App Installed</span>
-            </button>
-          ) : (
-            <button
-              onClick={async () => {
-                const installed = await promptInstall();
-                if (installed) {
-                  addToast('Parkable Installed! 🚀', 'Parkable is now installed on your device.', 'success');
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#dfba89]/40 bg-[#dfba89]/10 hover:bg-[#dfba89]/20 text-[#dfba89] text-xs font-bold transition shadow-xs cursor-pointer"
-              title="Download Parkable app to your device"
-            >
-              <Download className="w-3.5 h-3.5 text-[#dfba89]" />
-              <span className="hidden sm:inline">Install App</span>
-            </button>
-          )}
+            {/* PWA Install / Open in App Button */}
+            {isInstalled ? (
+              <button
+                onClick={openInstallGuide}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Parkable is installed on your device (Click for app info)"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="hidden sm:inline">App Installed</span>
+              </button>
+            ) : (
+              <button
+                onClick={async () => {
+                  const installed = await promptInstall();
+                  if (installed) {
+                    addToast('Parkable Installed! 🚀', 'Parkable is now installed on your device.', 'success');
+                  }
+                }}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#dfba89]/40 bg-[#dfba89]/10 hover:bg-[#dfba89]/20 text-[#dfba89] text-xs font-bold transition shadow-xs cursor-pointer"
+                title="Download Parkable app to your device"
+              >
+                <Download className="w-3.5 h-3.5 text-[#dfba89] shrink-0" />
+                <span className="hidden sm:inline">Install App</span>
+              </button>
+            )}
 
           {/* List a Spot CTA */}
           <button
@@ -200,7 +205,7 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
                     className="fixed inset-0 z-40"
                     onClick={() => setIsUserMenuOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-64 bg-[#181512] rounded-2xl shadow-2xl shadow-black/80 border border-[#383028] py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-1.5rem)] bg-[#181512] rounded-2xl shadow-2xl shadow-black/80 border border-[#383028] py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                     <div className="px-4 py-2.5 border-b border-[#2d2620]">
                       <p className="text-xs font-semibold text-[#f6f2ec]">{currentUser.name}</p>
                       <p className="text-xs text-[#a89682] truncate">{currentUser.email}</p>
@@ -317,5 +322,6 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
         </div>
       </div>
     </header>
+    </>
   );
 }

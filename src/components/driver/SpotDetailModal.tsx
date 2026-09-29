@@ -254,13 +254,13 @@ export default function SpotDetailModal({
         </div>
 
         {/* Sticky Bottom Booking Bar */}
-        <div className="p-4 bg-[#141210] border-t border-[#383028] flex items-center justify-between gap-4 shadow-lg shrink-0">
+        <div className="p-4 pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))] bg-[#141210] border-t border-[#383028] flex items-center justify-between gap-3 sm:gap-4 shadow-lg shrink-0">
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-black text-[#dfba89]">₹{spot.hourly_rate}</span>
+              <span className="text-lg sm:text-xl font-black text-[#dfba89]">₹{spot.hourly_rate}</span>
               <span className="text-xs text-[#a89682] font-semibold">/ hour</span>
             </div>
-            <p className="text-[11px] text-[#dfba89] font-bold">10% Platform fee added at checkout</p>
+            <p className="text-[10px] sm:text-[11px] text-[#dfba89] font-bold">10% Platform fee added at checkout</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -270,14 +270,14 @@ export default function SpotDetailModal({
                 window.open(url, '_blank');
               }}
               title="Open Navigation"
-              className="p-3 rounded-xl border border-[#383028] text-[#dfba89] hover:bg-[#201c18] transition"
+              className="p-2.5 sm:p-3 rounded-xl border border-[#383028] text-[#dfba89] hover:bg-[#201c18] transition"
             >
-              <Navigation className="w-5 h-5 text-[#dfba89]" />
+              <Navigation className="w-4 h-4 sm:w-5 sm:h-5 text-[#dfba89]" />
             </button>
 
             <button
               onClick={() => onBookNow(spot)}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5 sm:gap-2 active:scale-95"
             >
               <span>Book Spot Now</span>
               <ChevronRight className="w-4 h-4" />

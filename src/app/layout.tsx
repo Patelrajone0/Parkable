@@ -39,7 +39,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#181512",
+  themeColor: "#141210",
+  viewportFit: "cover",
 };
 
 import ClientProviders from "@/components/providers/ClientProviders";
@@ -56,8 +57,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
         <link rel="manifest" href={`${basePath}/manifest.json`} />
-        <meta name="theme-color" content="#181512" />
+        <meta name="theme-color" content="#141210" />
         <link rel="apple-touch-icon" href={`${basePath}/icons/apple-touch-icon.png`} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
