@@ -188,36 +188,33 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleDemoLogin = () => {
-    const demoUser: UserProfile = {
-      id: 'google-rajpatel',
-      name: 'Raj Patel',
-      email: 'patelrajone0@gmail.com',
+  const handleSocialAccountSelect = (name: string, email: string, provider: 'Google' | 'GitHub') => {
+    const isGithub = provider === 'GitHub';
+    const userProfile: UserProfile = {
+      id: `${provider.toLowerCase()}-${Date.now()}`,
+      name: name,
+      email: email,
       role: role,
-      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=patelrajone0@gmail.com',
+      avatar_url: isGithub
+        ? 'https://avatars.githubusercontent.com/u/218958232?v=4'
+        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
       rating: 5.0,
       reviews_count: 0,
       created_at: new Date().toISOString(),
     };
-    login(demoUser);
-    addToast('Google Instant Sign-In', 'Signed in as Raj Patel', 'success');
+    login(userProfile);
+    addToast(`${provider} Sign-In`, `Welcome, ${name}!`, 'success');
+    if (provider === 'Google') setGoogleSetupOpen(false);
+    if (provider === 'GitHub') setGithubSetupOpen(false);
     router.push('/');
   };
 
+  const handleGoogleDemoLogin = () => {
+    handleSocialAccountSelect('Raj Patel', 'patelrajone0@gmail.com', 'Google');
+  };
+
   const handleGithubDemoLogin = () => {
-    const demoUser: UserProfile = {
-      id: 'github-patelrajone0',
-      name: 'Patelrajone0',
-      email: 'patelrajone0@github.com',
-      role: role,
-      avatar_url: 'https://avatars.githubusercontent.com/u/218958232?v=4',
-      rating: 5.0,
-      reviews_count: 0,
-      created_at: new Date().toISOString(),
-    };
-    login(demoUser);
-    addToast('GitHub Instant Sign-In', 'Signed in as Patelrajone0', 'success');
-    router.push('/');
+    handleSocialAccountSelect('Patelrajone0', 'patelrajone0@github.com', 'GitHub');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -604,20 +601,17 @@ export default function LoginPage() {
       <GoogleSetupModal
         isOpen={googleSetupOpen}
         onClose={() => setGoogleSetupOpen(false)}
+        onSelectAccount={(name, email) => handleSocialAccountSelect(name, email, 'Google')}
         onSaveAndConnect={(clientId) => {
           setGoogleSetupOpen(false);
           handleOpenSocialModal('Google');
-        }}
-        onUseFallbackDemo={() => {
-          setGoogleSetupOpen(false);
-          handleGoogleDemoLogin();
         }}
       />
 
       <GithubSetupModal
         isOpen={githubSetupOpen}
         onClose={() => setGithubSetupOpen(false)}
-        onUseFallbackDemo={handleGithubDemoLogin}
+        onSelectAccount={(name, email) => handleSocialAccountSelect(name, email, 'GitHub')}
       />
 
       <ToastContainer />
