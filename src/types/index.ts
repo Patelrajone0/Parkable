@@ -51,6 +51,33 @@ export interface ParkingSpot {
   rating?: number;
   reviews_count?: number;
   distance_km?: number;
+  payout_account?: HostPayoutAccount;
+}
+
+export type PaymentGatewayType = 'razorpay' | 'stripe';
+export type PaymentMethodType = 'upi' | 'card' | 'netbanking' | 'apple_pay' | 'google_pay';
+
+export interface HostPayoutAccount {
+  account_holder_name: string;
+  upi_id?: string;
+  account_number?: string;
+  ifsc_code?: string;
+  bank_name?: string;
+  auto_payout_enabled: boolean;
+  status: 'active' | 'pending';
+  last_updated?: string;
+}
+
+export interface CompanyAccount {
+  company_name: string;
+  upi_id: string;
+  account_number: string;
+  ifsc_code: string;
+  bank_name: string;
+  commission_rate: number; // e.g. 0.10 for 10%
+  total_commission_collected: number;
+  available_company_balance: number;
+  last_settled_at?: string;
 }
 
 export interface Booking {
@@ -69,16 +96,22 @@ export interface Booking {
   total_hours: number;
   hourly_rate: number;
   base_price: number;
-  platform_fee: number; // 10%
+  platform_fee: number; // Platform Commission (e.g. 10%)
   total_amount: number;
-  host_earnings: number; // 90%
+  host_earnings: number; // Spot Owner share (e.g. 90%)
+  company_commission: number; // Direct company cut credited to your account
   status: BookingStatus;
   vehicle_plate: string;
   vehicle_model?: string;
   access_code: string;
-  payment_method: 'card' | 'apple_pay' | 'google_pay';
-  payment_status: 'paid' | 'pending';
+  payment_gateway?: PaymentGatewayType;
+  payment_method: PaymentMethodType;
+  payment_status: 'paid' | 'pending' | 'refunded';
   payment_id: string;
+  order_id?: string;
+  host_payout_ref?: string;      // Automated IMPS/UPI payout reference to spot owner
+  company_credit_ref?: string;   // Automated fee cut reference to company account
+  settlement_status?: 'instant_settled' | 'pending' | 'escrow';
   created_at: string;
 }
 

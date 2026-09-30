@@ -19,7 +19,12 @@ import {
   ShieldCheck,
   Zap,
   MapPin,
-  Compass
+  Compass,
+  Landmark,
+  Smartphone,
+  Save,
+  CheckCircle2,
+  Lock
 } from 'lucide-react';
 
 export default function HostDashboard() {
@@ -33,13 +38,26 @@ export default function HostDashboard() {
     setIsListSpotOpen,
     setActiveRole,
     platformCommissionRate,
+    hostPayoutAccount,
+    updateHostPayoutAccount,
     addToast,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'spots' | 'earnings'>('spots');
+  const [activeTab, setActiveTab] = useState<'spots' | 'earnings' | 'payouts'>('spots');
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [newPrice, setNewPrice] = useState<number>(0);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState<boolean>(false);
+
+  // Payout Account Edit State
+  const [payoutForm, setPayoutForm] = useState({
+    account_holder_name: hostPayoutAccount?.account_holder_name || currentUser?.name || 'Spot Owner',
+    upi_id: hostPayoutAccount?.upi_id || 'owner@okhdfcbank',
+    account_number: hostPayoutAccount?.account_number || '501004928192',
+    ifsc_code: hostPayoutAccount?.ifsc_code || 'HDFC0000123',
+    bank_name: hostPayoutAccount?.bank_name || 'HDFC Bank',
+    auto_payout_enabled: hostPayoutAccount?.auto_payout_enabled ?? true,
+  });
+  const [isSavedPayout, setIsSavedPayout] = useState<boolean>(false);
 
   // Filter spots belonging to this host
   const hostId = currentUser?.id;
@@ -62,6 +80,17 @@ export default function HostDashboard() {
     }
   };
 
+  const handleSavePayoutSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateHostPayoutAccount({
+      ...payoutForm,
+      status: 'active',
+    });
+    setIsSavedPayout(true);
+    addToast('Payout Account Saved', 'Your Bank Account & UPI ID will receive automatic splits from customer bookings.');
+    setTimeout(() => setIsSavedPayout(false), 3000);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-5 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-8 text-[#f6f2ec]">
       {/* Top Banner */}
@@ -71,12 +100,16 @@ export default function HostDashboard() {
             <span className="px-2.5 py-0.5 rounded-full bg-[#dfba89]/10 text-[#dfba89] text-[10px] sm:text-xs font-bold uppercase tracking-wider border border-[#dfba89]/30">
               Host Management Hub
             </span>
+            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+              <Zap className="w-3 h-3" />
+              <span>Automated Payouts Active</span>
+            </span>
           </div>
           <h1 className="text-xl sm:text-3xl font-black mt-2 tracking-tight text-[#f6f2ec]">
             Welcome back, {currentUser?.name || 'Host'}!
           </h1>
           <p className="text-xs sm:text-sm text-[#a89682] mt-1 max-w-xl">
-            Manage your parking spaces, track driver bookings, and collect hourly passive income with seamless automatic payouts.
+            Customer bookings automatically split in real-time: your 90% share routes to your bank/UPI, while platform commission automatically cuts to company treasury.
           </p>
         </div>
 
@@ -103,23 +136,23 @@ export default function HostDashboard() {
         {/* Net Host Earnings */}
         <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#383028] shadow-lg shadow-black/40 space-y-1">
           <div className="flex items-center justify-between text-[#a89682] text-xs font-semibold">
-            <span>Net Host Payout</span>
-            <div className="p-2 rounded-xl bg-[#201c18] border border-[#383028] text-[#dfba89]">
+            <span>Net Owner Payouts</span>
+            <div className="p-2 rounded-xl bg-[#201c18] border border-[#383028] text-emerald-400">
               <Wallet className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-[#dfba89]">
+          <div className="text-2xl sm:text-3xl font-black text-emerald-400">
             ₹{netEarnings.toLocaleString()}
           </div>
           <p className="text-[11px] text-[#756758]">
-            After 10% platform fee deduction
+            Direct to your Bank / UPI account
           </p>
         </div>
 
         {/* Gross Revenue */}
         <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#383028] shadow-lg shadow-black/40 space-y-1">
           <div className="flex items-center justify-between text-[#a89682] text-xs font-semibold">
-            <span>Gross Revenue</span>
+            <span>Gross Driver Paid</span>
             <div className="p-2 rounded-xl bg-[#201c18] border border-[#383028] text-[#dfba89]">
               <TrendingUp className="w-4 h-4" />
             </div>
@@ -128,7 +161,23 @@ export default function HostDashboard() {
             ₹{grossRevenue.toLocaleString()}
           </div>
           <p className="text-[11px] text-[#756758]">
-            Total driver booking payments
+            Total customer checkout volume
+          </p>
+        </div>
+
+        {/* Platform Fees Deducted */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#383028] shadow-lg shadow-black/40 space-y-1">
+          <div className="flex items-center justify-between text-[#a89682] text-xs font-semibold">
+            <span>Company Fee Cut (10%)</span>
+            <div className="p-2 rounded-xl bg-[#201c18] border border-[#383028] text-[#dfba89]">
+              <DollarSign className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-[#dfba89]">
+            ₹{totalCommission.toLocaleString()}
+          </div>
+          <p className="text-[11px] text-[#756758]">
+            Auto-credited to company account
           </p>
         </div>
 
@@ -147,29 +196,13 @@ export default function HostDashboard() {
             Vehicles currently parked
           </p>
         </div>
-
-        {/* Spaces Listed */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#383028] shadow-lg shadow-black/40 space-y-1">
-          <div className="flex items-center justify-between text-[#a89682] text-xs font-semibold">
-            <span>Total Spaces</span>
-            <div className="p-2 rounded-xl bg-[#201c18] border border-[#383028] text-[#dfba89]">
-              <Building2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-[#f6f2ec]">
-            {hostSpots.length}
-          </div>
-          <p className="text-[11px] text-[#756758]">
-            {hostSpots.filter((s) => s.is_active).length} online and discoverable
-          </p>
-        </div>
       </div>
 
       {/* Tabs navigation */}
-      <div className="flex items-center gap-2 border-b border-[#2c251e]">
+      <div className="flex items-center gap-2 border-b border-[#2c251e] overflow-x-auto">
         <button
           onClick={() => setActiveTab('spots')}
-          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition cursor-pointer ${
+          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
             activeTab === 'spots'
               ? 'border-[#dfba89] text-[#dfba89]'
               : 'border-transparent text-[#a89682] hover:text-[#f6f2ec]'
@@ -180,21 +213,32 @@ export default function HostDashboard() {
 
         <button
           onClick={() => setActiveTab('earnings')}
-          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition cursor-pointer ${
+          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
             activeTab === 'earnings'
               ? 'border-[#dfba89] text-[#dfba89]'
               : 'border-transparent text-[#a89682] hover:text-[#f6f2ec]'
           }`}
         >
-          Earnings & Booking Ledger ({hostBookings.length})
+          Earnings & Split Ledger ({hostBookings.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('payouts')}
+          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            activeTab === 'payouts'
+              ? 'border-[#dfba89] text-[#dfba89]'
+              : 'border-transparent text-[#a89682] hover:text-[#f6f2ec]'
+          }`}
+        >
+          Payout Destination (Bank & UPI)
         </button>
 
         <button
           onClick={() => setIsWithdrawOpen(true)}
-          className="ml-auto mb-2 px-3 py-1.5 rounded-xl border border-[#383028] bg-[#181512] hover:bg-[#201c18] text-xs font-bold text-[#dfba89] flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+          className="ml-auto mb-2 px-3 py-1.5 rounded-xl border border-[#383028] bg-[#181512] hover:bg-[#201c18] text-xs font-bold text-[#dfba89] flex items-center gap-1.5 shadow-xs transition cursor-pointer whitespace-nowrap"
         >
           <ArrowUpRight className="w-3.5 h-3.5 text-[#dfba89]" />
-          <span>Withdraw Payouts</span>
+          <span>Instant Transfer</span>
         </button>
       </div>
 
@@ -222,7 +266,6 @@ export default function HostDashboard() {
                   key={spot.id}
                   className="bg-[#181512] rounded-2xl border border-[#383028] shadow-lg shadow-black/40 hover:border-[#dfba89]/50 transition overflow-hidden flex flex-col"
                 >
-                  {/* Photo & Availability badge */}
                   <div className="relative h-44 w-full bg-[#100e0d] flex items-center justify-center">
                     {spot.photos && spot.photos.length > 0 ? (
                       <img
@@ -262,95 +305,56 @@ export default function HostDashboard() {
                     </div>
                   </div>
 
-                  {/* Spot details */}
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                  <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                     <div>
-                      <h4 className="font-bold text-sm text-[#f6f2ec] leading-snug line-clamp-1">
-                        {spot.title}
-                      </h4>
-                      <div className="flex items-center gap-1 text-[11px] text-[#a89682] mt-1">
-                        <MapPin className="w-3.5 h-3.5 text-[#dfba89] shrink-0" />
-                        <span className="truncate">{spot.address}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="px-2 py-0.5 rounded bg-[#201c18] text-[#c2b29d] border border-[#383028] text-[10px] font-bold uppercase tracking-wider">
-                          {spot.vehicle_size.replace('-', ' ')}
-                        </span>
-                        {spot.amenities.includes('ev_charging') && (
-                          <span className="px-2 py-0.5 rounded bg-[#282119] text-[#dfba89] border border-[#dfba89]/30 text-[10px] font-bold flex items-center gap-1">
-                            <Zap className="w-3 h-3 text-[#dfba89]" /> EV Fast
-                          </span>
-                        )}
-                      </div>
+                      <h4 className="font-bold text-sm text-[#f6f2ec] truncate">{spot.title}</h4>
+                      <p className="text-xs text-[#a89682] truncate mt-0.5">{spot.address}</p>
                     </div>
 
-                    {/* Pricing Edit & Status Toggle */}
-                    <div className="pt-3 border-t border-[#2c251e] flex items-center justify-between">
-                      {/* Price display / edit */}
-                      {editingPriceId === spot.id ? (
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-bold text-[#dfba89]">₹</span>
-                          <input
-                            type="number"
-                            value={newPrice}
-                            onChange={(e) => setNewPrice(parseInt(e.target.value) || 0)}
-                            className="w-16 px-1.5 py-0.5 text-xs font-bold border border-[#dfba89] bg-[#100e0d] text-[#f6f2ec] rounded"
-                          />
-                          <button
-                            onClick={() => handleSavePrice(spot.id)}
-                            className="p-1 text-[#dfba89] font-bold text-xs"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5">
-                          <div>
-                            <span className="text-base font-black text-[#dfba89]">
-                              ₹{spot.hourly_rate}
-                            </span>
-                            <span className="text-[10px] text-[#756758] font-medium">/hr</span>
+                    <div className="flex items-center justify-between pt-2 border-t border-[#28221b]">
+                      <div>
+                        <span className="text-[10px] text-[#756758] block">Hourly Rate</span>
+                        {editingPriceId === spot.id ? (
+                          <div className="flex items-center gap-1 mt-1">
+                            <input
+                              type="number"
+                              value={newPrice}
+                              onChange={(e) => setNewPrice(Number(e.target.value))}
+                              className="w-16 px-2 py-1 text-xs bg-[#100e0d] border border-[#383028] rounded text-[#dfba89]"
+                            />
+                            <button
+                              onClick={() => handleSavePrice(spot.id)}
+                              className="px-2 py-1 rounded bg-[#dfba89] text-[#12100e] text-xs font-bold"
+                            >
+                              Save
+                            </button>
                           </div>
-                          <button
-                            onClick={() => {
-                              setEditingPriceId(spot.id);
-                              setNewPrice(spot.hourly_rate);
-                            }}
-                            className="p-1 text-[#a89682] hover:text-[#f6f2ec]"
-                            title="Edit hourly rate"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Online / Offline switch */}
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => toggleSpotStatus(spot.id)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                            spot.is_active
-                              ? 'bg-[#dfba89]/15 text-[#dfba89] border border-[#dfba89]/40 hover:bg-[#dfba89]/25'
-                              : 'bg-[#201c18] text-[#a89682] border border-[#383028] hover:bg-[#28211a]'
-                          }`}
-                        >
-                          <Power className="w-3.5 h-3.5" />
-                          <span>{spot.is_active ? 'Go Offline' : 'Go Online'}</span>
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            if (confirm('Are you sure you want to delete this listing?')) {
-                              deleteSpot(spot.id);
-                            }
-                          }}
-                          className="p-1.5 text-[#756758] hover:text-[#e08272] rounded-lg hover:bg-[#281c1c] transition"
-                          title="Delete listing"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        ) : (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-sm font-black text-[#dfba89]">₹{spot.hourly_rate}</span>
+                            <button
+                              onClick={() => {
+                                setEditingPriceId(spot.id);
+                                setNewPrice(spot.hourly_rate);
+                              }}
+                              className="text-[#756758] hover:text-[#dfba89]"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                       </div>
+
+                      <button
+                        onClick={() => toggleSpotStatus(spot.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                          spot.is_active
+                            ? 'bg-[#201c18] text-[#c2b29d] border-[#383028] hover:text-white'
+                            : 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
+                        }`}
+                      >
+                        {spot.is_active ? 'Set Offline' : 'Set Online'}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -360,18 +364,20 @@ export default function HostDashboard() {
         </div>
       )}
 
-      {/* TAB 2: Earnings & Bookings Ledger */}
+      {/* TAB 2: Earnings & Booking Split Ledger */}
       {activeTab === 'earnings' && (
-        <div className="bg-[#181512] rounded-3xl border border-[#383028] shadow-lg overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-[#2c251e] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="bg-[#181512] rounded-3xl border border-[#383028] p-5 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#28221b]">
             <div>
-              <h3 className="font-bold text-base text-[#f6f2ec]">Driver Booking Ledger</h3>
+              <h3 className="font-bold text-base text-[#f6f2ec]">
+                Real-Time Booking & Commission Split Ledger
+              </h3>
               <p className="text-xs text-[#a89682]">
-                Detailed transaction log with 10% platform fee calculation & host net payouts
+                Customer payments automatically route 90% payout to spot owner and cut 10% platform commission to company treasury.
               </p>
             </div>
             <div className="text-xs font-semibold text-[#a89682] bg-[#201c18] px-3 py-1.5 rounded-xl border border-[#383028]">
-              Platform Commission: <span className="font-bold text-[#dfba89]">{(platformCommissionRate * 100).toFixed(0)}%</span>
+              Platform Fee Cut: <span className="font-bold text-[#dfba89]">{(platformCommissionRate * 100).toFixed(0)}%</span>
             </div>
           </div>
 
@@ -388,9 +394,10 @@ export default function HostDashboard() {
                     <th className="py-3 px-4">Driver & Vehicle</th>
                     <th className="py-3 px-4">Parking Spot</th>
                     <th className="py-3 px-4">Duration</th>
-                    <th className="py-3 px-4">Gross Paid</th>
-                    <th className="py-3 px-4">Platform Fee (10%)</th>
-                    <th className="py-3 px-4">Host Net Payout</th>
+                    <th className="py-3 px-4">Driver Paid</th>
+                    <th className="py-3 px-4">Company Fee Cut</th>
+                    <th className="py-3 px-4">Owner Net Payout</th>
+                    <th className="py-3 px-4">Gateway & Split Ref</th>
                     <th className="py-3 px-4">Status</th>
                   </tr>
                 </thead>
@@ -413,23 +420,21 @@ export default function HostDashboard() {
                       <td className="py-3 px-4 font-semibold text-[#f6f2ec]">
                         ₹{b.total_amount}
                       </td>
-                      <td className="py-3 px-4 text-[#e08272] font-medium">
+                      <td className="py-3 px-4 text-[#dfba89] font-medium font-mono">
                         -₹{b.platform_fee}
                       </td>
-                      <td className="py-3 px-4 font-black text-[#dfba89]">
-                        ₹{b.host_earnings}
+                      <td className="py-3 px-4 font-black text-emerald-400 font-mono">
+                        +₹{b.host_earnings}
+                      </td>
+                      <td className="py-3 px-4 text-[10px] font-mono text-[#a89682]">
+                        <span className="text-[#dfba89] uppercase font-bold">{b.payment_gateway || 'Razorpay'}</span>
+                        <div className="text-[9px] text-[#756758] truncate max-w-[120px]">
+                          {b.host_payout_ref || 'IMPS-DIRECT'}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            b.status === 'active'
-                              ? 'bg-[#282119] text-[#dfba89] border border-[#dfba89]/30'
-                              : b.status === 'completed'
-                              ? 'bg-[#201c18] text-[#a89682] border border-[#383028]'
-                              : 'bg-[#351c1c] text-[#e08272] border border-[#e08272]/30'
-                          }`}
-                        >
-                          {b.status}
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          Settled
                         </span>
                       </td>
                     </tr>
@@ -441,25 +446,151 @@ export default function HostDashboard() {
         </div>
       )}
 
+      {/* TAB 3: Payout Destination (Bank & UPI Account Settings) */}
+      {activeTab === 'payouts' && (
+        <div className="bg-[#181512] rounded-3xl border border-[#383028] p-5 sm:p-7 shadow-xl space-y-6 max-w-3xl">
+          <div className="flex items-center justify-between pb-3 border-b border-[#28221b]">
+            <div>
+              <div className="flex items-center gap-2">
+                <Landmark className="w-5 h-5 text-[#dfba89]" />
+                <h3 className="font-bold text-base text-[#f6f2ec]">
+                  Parking Spot Owner Payout Destination
+                </h3>
+              </div>
+              <p className="text-xs text-[#a89682] mt-1">
+                Configure your verified Bank Account or UPI VPA where your 90% parking earnings will be routed automatically.
+              </p>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Direct Route Ready</span>
+            </span>
+          </div>
+
+          <form onSubmit={handleSavePayoutSettings} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-[#a89682] uppercase tracking-wider mb-1.5">
+                  Account Holder Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={payoutForm.account_holder_name}
+                  onChange={(e) => setPayoutForm({ ...payoutForm, account_holder_name: e.target.value })}
+                  placeholder="e.g. Raj Patel"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#a89682] uppercase tracking-wider mb-1.5">
+                  UPI ID (VPA) for Instant Payout
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    value={payoutForm.upi_id}
+                    onChange={(e) => setPayoutForm({ ...payoutForm, upi_id: e.target.value })}
+                    placeholder="e.g. owner@okhdfcbank"
+                    className="w-full px-3.5 py-2.5 text-xs font-mono font-semibold bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                  />
+                  <Smartphone className="w-4 h-4 text-[#dfba89] absolute right-3 top-3" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#a89682] uppercase tracking-wider mb-1.5">
+                  Bank Account Number
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={payoutForm.account_number}
+                  onChange={(e) => setPayoutForm({ ...payoutForm, account_number: e.target.value })}
+                  placeholder="e.g. 501004928192"
+                  className="w-full px-3.5 py-2.5 text-xs font-mono font-semibold bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#a89682] uppercase tracking-wider mb-1.5">
+                  Bank IFSC Code
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={payoutForm.ifsc_code}
+                  onChange={(e) => setPayoutForm({ ...payoutForm, ifsc_code: e.target.value.toUpperCase() })}
+                  placeholder="e.g. HDFC0000123"
+                  className="w-full px-3.5 py-2.5 text-xs font-mono font-bold uppercase bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-[#a89682] uppercase tracking-wider mb-1.5">
+                  Bank Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={payoutForm.bank_name}
+                  onChange={(e) => setPayoutForm({ ...payoutForm, bank_name: e.target.value })}
+                  placeholder="e.g. HDFC Bank Ltd"
+                  className="w-full px-3.5 py-2.5 text-xs font-semibold bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60"
+                />
+              </div>
+            </div>
+
+            {/* Auto Payout Checkbox */}
+            <div className="p-3.5 rounded-2xl bg-[#201c18] border border-[#383028] flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-[#f6f2ec] block">Instant Automatic Payout</span>
+                <span className="text-[11px] text-[#a89682]">
+                  Automatically deposit 90% payout on every driver reservation without manual intervention
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={payoutForm.auto_payout_enabled}
+                onChange={(e) => setPayoutForm({ ...payoutForm, auto_payout_enabled: e.target.checked })}
+                className="w-4 h-4 accent-[#dfba89] cursor-pointer"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="submit"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-black text-xs shadow-lg shadow-[#dfba89]/20 flex items-center gap-2 cursor-pointer"
+              >
+                {isSavedPayout ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                <span>{isSavedPayout ? 'Saved & Verified!' : 'Save Payout Destination'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Withdraw Modal */}
       {isWithdrawOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#181512] rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-[#383028] space-y-4">
             <h4 className="font-bold text-base text-[#f6f2ec]">Withdraw Host Earnings</h4>
             <p className="text-xs text-[#a89682]">
-              Available payout balance: <strong className="text-[#dfba89] font-black">₹{netEarnings}</strong>.
+              Available payout balance: <strong className="text-emerald-400 font-black">₹{netEarnings}</strong>.
             </p>
             <div className="p-3 bg-[#201c18] rounded-xl border border-[#383028] text-xs space-y-1">
-              <span className="text-[#756758] font-bold uppercase text-[10px]">Bank Account on File</span>
-              <p className="font-mono font-bold text-[#f6f2ec]">HDFC Bank •••• 9102</p>
-              <p className="text-[11px] text-[#a89682]">IFSC: HDFC0001092</p>
+              <span className="text-[#756758] font-bold uppercase text-[10px]">Verified Destination</span>
+              <p className="font-mono font-bold text-[#f6f2ec]">{hostPayoutAccount?.bank_name} •••• {hostPayoutAccount?.account_number?.slice(-4)}</p>
+              <p className="text-[11px] text-[#a89682]">UPI: {hostPayoutAccount?.upi_id}</p>
             </div>
             <button
               onClick={() => {
-                addToast('Payout Initiated', `₹${netEarnings} scheduled for instant IMPS transfer to HDFC Bank.`);
+                addToast('Payout Dispatched', `₹${netEarnings} transferred to ${hostPayoutAccount?.bank_name} (${hostPayoutAccount?.upi_id}).`);
                 setIsWithdrawOpen(false);
               }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 transition cursor-pointer"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-black text-xs shadow-md shadow-[#dfba89]/20 transition cursor-pointer"
             >
               Transfer ₹{netEarnings} to Bank Now
             </button>

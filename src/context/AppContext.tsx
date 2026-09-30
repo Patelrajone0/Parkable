@@ -1,7 +1,17 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { ParkingSpot, Booking, UserProfile, UserRole, SearchFilterState } from '@/types';
+import { 
+  ParkingSpot, 
+  Booking, 
+  UserProfile, 
+  UserRole, 
+  SearchFilterState, 
+  CompanyAccount, 
+  HostPayoutAccount, 
+  PaymentGatewayType, 
+  PaymentMethodType 
+} from '@/types';
 import { INITIAL_SPOTS, INITIAL_BOOKINGS, generateDemoSpotsAround } from '@/data/initialData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
@@ -52,7 +62,12 @@ interface AppContextType {
     durationHours: number;
     vehiclePlate: string;
     vehicleModel?: string;
-    paymentMethod: 'card' | 'apple_pay' | 'google_pay';
+    paymentGateway?: PaymentGatewayType;
+    paymentMethod: PaymentMethodType;
+    paymentId?: string;
+    orderId?: string;
+    hostPayoutRef?: string;
+    companyCreditRef?: string;
   }) => Promise<Booking>;
   extendBooking: (bookingId: string, additionalHours: number) => Promise<void>;
   cancelBooking: (bookingId: string) => void;
@@ -108,6 +123,12 @@ interface AppContextType {
   setNavGlowEffect: (glow: NavGlowEffect) => void;
   navShowLabels: NavShowLabels;
   setNavShowLabels: (labels: NavShowLabels) => void;
+
+  // Payment Gateway & Company Accounts
+  companyAccount: CompanyAccount;
+  updateCompanyAccount: (data: Partial<CompanyAccount>) => void;
+  hostPayoutAccount: HostPayoutAccount;
+  updateHostPayoutAccount: (data: Partial<HostPayoutAccount>) => void;
 }
 
 export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -133,6 +154,29 @@ const STORAGE_KEY_COMMISSION = 'parkable_commission_rate_v1';
 const STORAGE_KEY_NAV_STYLE = 'parkable_bottom_nav_style_v2';
 const STORAGE_KEY_NAV_GLOW = 'parkable_bottom_nav_glow_v2';
 const STORAGE_KEY_NAV_LABELS = 'parkable_bottom_nav_labels_v2';
+const STORAGE_KEY_COMPANY_ACCOUNT = 'parkable_company_account_v2';
+const STORAGE_KEY_HOST_PAYOUT = 'parkable_host_payout_v2';
+
+const DEFAULT_COMPANY_ACCOUNT: CompanyAccount = {
+  company_name: 'ParkEase Technologies (Company Account)',
+  upi_id: 'parkease.commission@hdfcbank',
+  account_number: '50200928190281',
+  ifsc_code: 'HDFC0001092',
+  bank_name: 'HDFC Bank Ltd',
+  commission_rate: 0.10,
+  total_commission_collected: 0,
+  available_company_balance: 0,
+};
+
+const DEFAULT_HOST_PAYOUT_ACCOUNT: HostPayoutAccount = {
+  account_holder_name: 'Raj Patel (Host)',
+  upi_id: 'rajpatel.parkable@okhdfcbank',
+  account_number: '501004928192',
+  ifsc_code: 'HDFC0000123',
+  bank_name: 'HDFC Bank',
+  auto_payout_enabled: true,
+  status: 'active',
+};
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -150,6 +194,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [platformCommissionRate, setPlatformCommissionRate] = useState<number>(0.10);
+  const [companyAccount, setCompanyAccount] = useState<CompanyAccount>(DEFAULT_COMPANY_ACCOUNT);
+  const [hostPayoutAccount, setHostPayoutAccount] = useState<HostPayoutAccount>(DEFAULT_HOST_PAYOUT_ACCOUNT);
+
+  const updateCompanyAccount = (data: Partial<CompanyAccount>) => {
+    setCompanyAccount((prev) => {
+      const updated = { ...prev, ...data };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_KEY_COMPANY_ACCOUNT, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+  };
+
+  const updateHostPayoutAccount = (data: Partial<HostPayoutAccount>) => {
+    setHostPayoutAccount((prev) => {
+      const updated = { ...prev, ...data, last_updated: new Date().toISOString() };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_KEY_HOST_PAYOUT, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+  };
 
   // Bottom Navigation Layout Customizer
   const [bottomNavStyle, setBottomNavStyleState] = useState<BottomNavStyle>('glass-aura');
@@ -353,6 +423,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const savedNavLabels = localStorage.getItem(STORAGE_KEY_NAV_LABELS) as NavShowLabels | null;
       if (savedNavLabels) setNavShowLabelsState(savedNavLabels);
+
+      // Hydrate Company Account & Host Payout Settings
+      const savedCompany = localStorage.getItem(STORAGE_KEY_COMPANY_ACCOUNT);
+      if (savedCompany) {
+        try {
+          setCompanyAccount(JSON.parse(savedCompany));
+        } catch {}
+      }
+
+      const savedPayout = localStorage.getItem(STORAGE_KEY_HOST_PAYOUT);
+      if (savedPayout) {
+        try {
+          setHostPayoutAccount(JSON.parse(savedPayout));
+        } catch {}
+      }
     } catch (e) {
       console.warn('Could not read from local storage:', e);
       setIsLoadingAuth(false);
@@ -646,14 +731,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     durationHours: number;
     vehiclePlate: string;
     vehicleModel?: string;
-    paymentMethod: 'card' | 'apple_pay' | 'google_pay';
+    paymentGateway?: PaymentGatewayType;
+    paymentMethod: PaymentMethodType;
+    paymentId?: string;
+    orderId?: string;
+    hostPayoutRef?: string;
+    companyCreditRef?: string;
   }): Promise<Booking> => {
     const basePrice = data.spot.hourly_rate * data.durationHours;
     const platformFee = Math.round(basePrice * platformCommissionRate);
     const totalAmount = basePrice + platformFee;
-    const hostEarnings = basePrice - 0; // Host gets full base price, platform takes fee from driver or %
+    const hostEarnings = basePrice;
+    const companyCommission = platformFee;
     const endTime = new Date(data.startTime.getTime() + data.durationHours * 3600000);
     const accessCode = data.spot.gate_code || Math.floor(1000 + Math.random() * 9000).toString();
+    const timestamp = Date.now().toString().slice(-6);
+
+    const hostPayoutRef = data.hostPayoutRef || `IMPS-HST-${timestamp}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const companyCreditRef = data.companyCreditRef || `COMM-COM-${timestamp}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const paymentGateway = data.paymentGateway || (data.paymentMethod === 'apple_pay' || data.paymentMethod === 'card' ? 'stripe' : 'razorpay');
+    const paymentId = data.paymentId || `pay_${paymentGateway}_${Math.random().toString(36).substring(2, 10)}`;
 
     const driverUser = currentUser || {
       id: `driver-${Date.now()}`,
@@ -684,13 +781,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       platform_fee: platformFee,
       total_amount: totalAmount,
       host_earnings: hostEarnings,
+      company_commission: companyCommission,
       status: 'active',
       vehicle_plate: data.vehiclePlate,
       vehicle_model: data.vehicleModel || 'Standard Vehicle',
       access_code: accessCode,
+      payment_gateway: paymentGateway,
       payment_method: data.paymentMethod,
       payment_status: 'paid',
-      payment_id: `pi_stripe_${Math.random().toString(36).substring(2, 10)}`,
+      payment_id: paymentId,
+      order_id: data.orderId,
+      host_payout_ref: hostPayoutRef,
+      company_credit_ref: companyCreditRef,
+      settlement_status: 'instant_settled',
       created_at: new Date().toISOString(),
     };
 
@@ -720,8 +823,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setBookings((prev) => [newBooking, ...prev]);
+
+    // Automatically deposit commission fee into Company Account
+    setCompanyAccount((prev) => {
+      const updated = {
+        ...prev,
+        total_commission_collected: prev.total_commission_collected + companyCommission,
+        available_company_balance: prev.available_company_balance + companyCommission,
+        last_settled_at: new Date().toISOString(),
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_KEY_COMPANY_ACCOUNT, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+
     setIsCheckoutOpen(false);
-    addToast('Booking Confirmed!', `Reserved at ${data.spot.address}. Safe travels!`);
+    addToast(
+      'Payment & Split Settled! 🚀',
+      `₹${hostEarnings} routed to owner, ₹${companyCommission} platform cut credited to company account.`
+    );
     return newBooking;
   };
 
@@ -845,6 +968,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setNavGlowEffect,
         navShowLabels,
         setNavShowLabels,
+
+        companyAccount,
+        updateCompanyAccount,
+        hostPayoutAccount,
+        updateHostPayoutAccount,
       }}
     >
       {children}

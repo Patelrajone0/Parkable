@@ -16,7 +16,15 @@ import {
   Trash2,
   Lock,
   Search,
-  Car
+  Car,
+  Landmark,
+  Smartphone,
+  Save,
+  CheckCircle2,
+  Zap,
+  ArrowUpRight,
+  Wallet,
+  CreditCard
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -26,6 +34,8 @@ export default function AdminDashboard() {
     allUsers,
     platformCommissionRate,
     setPlatformCommissionRate,
+    companyAccount,
+    updateCompanyAccount,
     toggleSpotStatus,
     deleteSpot,
     addToast,
@@ -33,10 +43,19 @@ export default function AdminDashboard() {
 
   const [commissionInput, setCommissionInput] = useState((platformCommissionRate * 100).toString());
   const [userSearch, setUserSearch] = useState('');
+  const [isEditingCompany, setIsEditingCompany] = useState(false);
+
+  const [companyForm, setCompanyForm] = useState({
+    company_name: companyAccount?.company_name || 'ParkEase Technologies (Company Account)',
+    upi_id: companyAccount?.upi_id || 'parkease.commission@hdfcbank',
+    account_number: companyAccount?.account_number || '50200928190281',
+    ifsc_code: companyAccount?.ifsc_code || 'HDFC0001092',
+    bank_name: companyAccount?.bank_name || 'HDFC Bank Ltd',
+  });
 
   // Calculate Marketplace KPIs
   const totalGMV = bookings.reduce((sum, b) => sum + b.total_amount, 0);
-  const totalCommissionEarned = bookings.reduce((sum, b) => sum + b.platform_fee, 0);
+  const totalCommissionEarned = bookings.reduce((sum, b) => sum + (b.company_commission || b.platform_fee || 0), 0);
   const totalHostPayouts = bookings.reduce((sum, b) => sum + b.host_earnings, 0);
   const activeSpotsCount = spots.filter((s) => s.is_active).length;
   const activeBookingsCount = bookings.filter((b) => b.status === 'active').length;
@@ -52,6 +71,13 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveCompanyAccount = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateCompanyAccount(companyForm);
+    setIsEditingCompany(false);
+    addToast('Company Account Updated', 'Platform commissions will be deposited directly to your company account.');
+  };
+
   const filteredUsers = allUsers.filter(
     (u) =>
       u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -60,14 +86,14 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 text-[#f6f2ec]">
       {/* Top Banner */}
       <div className="bg-[#181512] text-[#f6f2ec] p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-[#383028]">
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full bg-[#dfba89]/15 text-[#dfba89] text-xs font-bold uppercase tracking-wider border border-[#dfba89]/30 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-[#dfba89]" />
-              <span>Platform Administration</span>
+              <span>Platform Administration & Company Treasury</span>
             </span>
             <span className="flex items-center gap-1 text-[11px] bg-[#241f1a] text-[#dfba89] px-2.5 py-0.5 rounded-full border border-[#383028]">
               <Database className="w-3 h-3 text-[#dfba89]" />
@@ -75,10 +101,10 @@ export default function AdminDashboard() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black mt-2 tracking-tight text-[#f6f2ec]">
-            ParkEase Marketplace Overview
+            ParkEase Marketplace & Company Account Hub
           </h1>
           <p className="text-xs sm:text-sm text-[#a89682] mt-1 max-w-xl">
-            Monitor transaction volumes, platform commission take-rates, parking supply, and user accounts.
+            Customer booking payments are split automatically: your company platform cut deposits directly to your company bank account, while spot owners receive their payouts.
           </p>
         </div>
 
@@ -86,7 +112,7 @@ export default function AdminDashboard() {
         <form onSubmit={handleUpdateCommission} className="p-3 bg-[#201c18] rounded-2xl border border-[#383028] flex items-center gap-2">
           <div className="flex items-center gap-1.5 pl-2">
             <Percent className="w-4 h-4 text-[#dfba89]" />
-            <span className="text-xs font-bold text-[#a89682]">Take Rate:</span>
+            <span className="text-xs font-bold text-[#a89682]">Company Cut:</span>
           </div>
           <div className="relative">
             <input
@@ -102,7 +128,7 @@ export default function AdminDashboard() {
           </div>
           <button
             type="submit"
-            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow transition"
+            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow transition cursor-pointer"
           >
             Update
           </button>
@@ -114,7 +140,7 @@ export default function AdminDashboard() {
         {/* Platform Revenue (Commissions) */}
         <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#383028] shadow-lg space-y-1">
           <div className="flex items-center justify-between text-[#a89682] text-xs font-semibold">
-            <span>Platform Commission</span>
+            <span>Company Account Cut</span>
             <div className="p-2 rounded-xl bg-[#241f1a] text-[#dfba89] border border-[#383028]">
               <DollarSign className="w-4 h-4" />
             </div>
@@ -123,7 +149,23 @@ export default function AdminDashboard() {
             ₹{totalCommissionEarned.toLocaleString()}
           </div>
           <p className="text-[11px] text-[#756758]">
-            Based on {(platformCommissionRate * 100).toFixed(0)}% platform take rate
+            Directly credited to your company account
+          </p>
+        </div>
+
+        {/* Spot Owner Total Payouts */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#383028] shadow-lg space-y-1">
+          <div className="flex items-center justify-between text-[#a89682] text-xs font-semibold">
+            <span>Total Owner Payouts</span>
+            <div className="p-2 rounded-xl bg-[#241f1a] text-emerald-400 border border-[#383028]">
+              <Wallet className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-emerald-400">
+            ₹{totalHostPayouts.toLocaleString()}
+          </div>
+          <p className="text-[11px] text-[#756758]">
+            Routed automatically to parking spot owners
           </p>
         </div>
 
@@ -139,7 +181,7 @@ export default function AdminDashboard() {
             ₹{totalGMV.toLocaleString()}
           </div>
           <p className="text-[11px] text-[#756758]">
-            Total transactions processed
+            Total customer payments processed
           </p>
         </div>
 
@@ -158,22 +200,260 @@ export default function AdminDashboard() {
             {activeSpotsCount} active spots
           </p>
         </div>
+      </div>
 
-        {/* Active Driver Bookings */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#181512] border border-[#383028] shadow-lg space-y-1">
-          <div className="flex items-center justify-between text-[#a89682] text-xs font-semibold">
-            <span>Active Reservations</span>
-            <div className="p-2 rounded-xl bg-[#241f1a] text-[#dfba89] border border-[#383028]">
-              <Users className="w-4 h-4" />
+      {/* COMPANY ACCOUNT (MY ACCOUNT) & GATEWAYS SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Company Account Card */}
+        <div className="lg:col-span-2 bg-[#181512] rounded-3xl border border-[#383028] p-5 sm:p-6 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#28221b]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#dfba89]/15 border border-[#dfba89]/30 flex items-center justify-center text-[#dfba89]">
+                <Landmark className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-[#f6f2ec]">
+                  Company Account (My Account)
+                </h3>
+                <p className="text-xs text-[#a89682]">
+                  Your destination bank account for automatic platform commission cuts
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsEditingCompany(!isEditingCompany)}
+              className="px-3 py-1.5 rounded-xl border border-[#383028] bg-[#201c18] hover:bg-[#28211a] text-xs font-bold text-[#dfba89] transition cursor-pointer"
+            >
+              {isEditingCompany ? 'Cancel' : 'Edit Company Account'}
+            </button>
+          </div>
+
+          {isEditingCompany ? (
+            <form onSubmit={handleSaveCompanyAccount} className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                    Company Legal Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={companyForm.company_name}
+                    onChange={(e) => setCompanyForm({ ...companyForm, company_name: e.target.value })}
+                    className="w-full px-3 py-2 text-xs font-semibold bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:ring-1 focus:ring-[#dfba89]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                    Company UPI ID (VPA)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={companyForm.upi_id}
+                    onChange={(e) => setCompanyForm({ ...companyForm, upi_id: e.target.value })}
+                    className="w-full px-3 py-2 text-xs font-mono font-semibold bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:ring-1 focus:ring-[#dfba89]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                    Bank Account Number
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={companyForm.account_number}
+                    onChange={(e) => setCompanyForm({ ...companyForm, account_number: e.target.value })}
+                    className="w-full px-3 py-2 text-xs font-mono font-semibold bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:ring-1 focus:ring-[#dfba89]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                    Bank IFSC Code
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={companyForm.ifsc_code}
+                    onChange={(e) => setCompanyForm({ ...companyForm, ifsc_code: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 text-xs font-mono font-bold uppercase bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:ring-1 focus:ring-[#dfba89]"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#a89682] mb-1">
+                    Bank Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={companyForm.bank_name}
+                    onChange={(e) => setCompanyForm({ ...companyForm, bank_name: e.target.value })}
+                    className="w-full px-3 py-2 text-xs font-semibold bg-[#100e0d] text-[#f6f2ec] rounded-xl border border-[#383028] focus:ring-1 focus:ring-[#dfba89]"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] text-[#12100e] font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Save Company Bank Details</span>
+              </button>
+            </form>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-2xl bg-[#201c18] border border-[#383028] space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#756758] block">
+                  Company Treasury
+                </span>
+                <span className="text-xs font-bold text-[#f6f2ec] block truncate">
+                  {companyAccount?.company_name}
+                </span>
+                <span className="text-[11px] font-mono text-[#dfba89] block">
+                  UPI: {companyAccount?.upi_id}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#201c18] border border-[#383028] space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#756758] block">
+                  Bank Settlement Account
+                </span>
+                <span className="text-xs font-mono font-bold text-[#f6f2ec] block">
+                  {companyAccount?.bank_name} •••• {companyAccount?.account_number?.slice(-4)}
+                </span>
+                <span className="text-[11px] font-mono text-[#a89682] block">
+                  IFSC: {companyAccount?.ifsc_code}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#201c18] border border-[#383028] space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#756758] block">
+                  Commission Payout Status
+                </span>
+                <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Auto-Deposit Active</span>
+                </div>
+                <span className="text-[10px] text-[#756758] block">
+                  {(platformCommissionRate * 100).toFixed(0)}% per booking cut
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Dual Gateways Status Card */}
+        <div className="bg-[#181512] rounded-3xl border border-[#383028] p-5 shadow-xl space-y-3.5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 pb-2 border-b border-[#28221b]">
+              <Zap className="w-4 h-4 text-[#dfba89]" />
+              <h4 className="font-bold text-sm text-[#f6f2ec]">Payment Gateways Status</h4>
+            </div>
+
+            <div className="space-y-2.5 mt-3">
+              <div className="p-3 rounded-2xl bg-[#201c18] border border-[#383028] flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-[#f6f2ec] block">Razorpay Gateway</span>
+                  <span className="text-[10px] text-[#a89682]">UPI, PhonePe, GPay, Cards & Route Split</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                  Ready
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-[#201c18] border border-[#383028] flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-[#f6f2ec] block">Stripe Gateway</span>
+                  <span className="text-[10px] text-[#a89682]">Global Cards, Apple Pay, Connect Split</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                  Ready
+                </span>
+              </div>
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-[#f6f2ec]">
-            {activeBookingsCount}
-          </div>
-          <p className="text-[11px] text-[#756758]">
-            {bookings.length} total lifetime bookings
+
+          <p className="text-[10px] text-[#756758] pt-2 border-t border-[#28221b]">
+            Keys configured in <code className="text-[#dfba89]">.env.local</code>. Running in dual-gateway split mode.
           </p>
         </div>
+      </div>
+
+      {/* REAL-TIME MARKETPLACE SPLIT & COMMISSION LEDGER */}
+      <div className="bg-[#181512] rounded-3xl border border-[#383028] p-5 shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#28221b]">
+          <div>
+            <h3 className="font-bold text-base text-[#f6f2ec]">
+              Marketplace Split Settlements (Company vs Owner)
+            </h3>
+            <p className="text-xs text-[#a89682]">
+              Audit trail showing customer paid amounts, company commission cuts, and owner payouts.
+            </p>
+          </div>
+          <span className="text-xs font-mono font-bold text-[#dfba89] bg-[#201c18] px-3 py-1 rounded-xl border border-[#383028]">
+            {bookings.length} Total Settlements
+          </span>
+        </div>
+
+        {bookings.length === 0 ? (
+          <div className="p-8 text-center text-xs text-[#756758]">
+            No transactions processed yet. When drivers book a spot, settlements will appear here.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#12100e] border-b border-[#2c251e] text-[#a89682] font-bold uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Booking ID</th>
+                  <th className="py-3 px-4">Driver & Vehicle</th>
+                  <th className="py-3 px-4">Parking Spot</th>
+                  <th className="py-3 px-4">Customer Paid</th>
+                  <th className="py-3 px-4">Company Cut (My Account)</th>
+                  <th className="py-3 px-4">Owner Payout</th>
+                  <th className="py-3 px-4">Gateway & Settlement Ref</th>
+                  <th className="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#241f1a]">
+                {bookings.map((b) => (
+                  <tr key={b.id} className="hover:bg-[#201c18]/60 transition">
+                    <td className="py-3 px-4 font-mono font-bold text-[#dfba89]">
+                      {b.id}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-[#f6f2ec]">{b.driver_name}</div>
+                      <div className="font-mono text-[11px] text-[#756758]">{b.vehicle_plate}</div>
+                    </td>
+                    <td className="py-3 px-4 max-w-xs truncate font-medium text-[#f6f2ec]">
+                      {b.spot_title}
+                    </td>
+                    <td className="py-3 px-4 font-bold text-[#f6f2ec]">
+                      ₹{b.total_amount}
+                    </td>
+                    <td className="py-3 px-4 font-black text-[#dfba89] font-mono">
+                      +₹{b.company_commission || b.platform_fee}
+                    </td>
+                    <td className="py-3 px-4 font-black text-emerald-400 font-mono">
+                      ₹{b.host_earnings}
+                    </td>
+                    <td className="py-3 px-4 text-[10px] font-mono text-[#a89682]">
+                      <span className="text-[#dfba89] font-bold uppercase">{b.payment_gateway || 'Razorpay'}</span>
+                      <div className="text-[9px] text-[#756758] truncate max-w-[120px]">
+                        {b.company_credit_ref || 'COMM-DIRECT'}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        Instant Settled
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Grid: Spots Management & User Accounts */}
@@ -229,7 +509,7 @@ export default function AdminDashboard() {
                         deleteSpot(spot.id);
                       }
                     }}
-                    className="p-1.5 text-[#756758] hover:text-rose-400 transition"
+                    className="p-1.5 text-[#756758] hover:text-rose-400 transition cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
