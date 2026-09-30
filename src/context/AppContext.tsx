@@ -169,13 +169,13 @@ const DEFAULT_COMPANY_ACCOUNT: CompanyAccount = {
 };
 
 const DEFAULT_HOST_PAYOUT_ACCOUNT: HostPayoutAccount = {
-  account_holder_name: 'Raj Patel (Host)',
-  upi_id: 'rajpatel.parkable@okhdfcbank',
-  account_number: '501004928192',
-  ifsc_code: 'HDFC0000123',
-  bank_name: 'HDFC Bank',
+  account_holder_name: '',
+  upi_id: '',
+  account_number: '',
+  ifsc_code: '',
+  bank_name: '',
   auto_payout_enabled: true,
-  status: 'active',
+  status: 'pending',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -635,6 +635,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       host_name: hostUser.name,
       host_avatar: hostUser.avatar_url,
       host_rating: hostUser.rating || 5.0,
+      payout_account: spotData.payout_account || (hostPayoutAccount.status === 'active' ? hostPayoutAccount : undefined),
       rating: 5.0,
       reviews_count: 0,
       created_at: new Date().toISOString(),
