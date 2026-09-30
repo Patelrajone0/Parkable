@@ -13,7 +13,9 @@ import {
   X, 
   Filter, 
   Compass,
-  Sparkles
+  Sparkles,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { VehicleSize, SpaceType } from '@/types';
 
@@ -23,6 +25,22 @@ const POPULAR_LOCATIONS = [
   { name: 'MG Road Metro', lat: 12.9752, lng: 77.6053 },
   { name: 'Lavelle Road / UB City', lat: 12.9698, lng: 77.5991 },
   { name: 'Victoria Layout', lat: 12.9645, lng: 77.6148 },
+];
+
+const VEHICLE_OPTIONS: { value: VehicleSize | 'all'; label: string; icon: string; detail: string }[] = [
+  { value: 'all', label: 'Any Vehicle Size', icon: '🚗', detail: 'All spot dimensions' },
+  { value: '2-wheeler', label: '2-Wheeler', icon: '🏍️', detail: 'Bike / Scooter' },
+  { value: 'hatchback', label: 'Hatchback', icon: '🚙', detail: 'Swift, i20, Polo' },
+  { value: 'compact-suv', label: 'Compact SUV', icon: '🚘', detail: 'Creta, Seltos, Nexon' },
+  { value: 'large-suv', label: 'Large SUV', icon: '🚐', detail: 'Fortuner, Truck' },
+];
+
+const SPACE_TYPE_OPTIONS: { value: SpaceType | 'all'; label: string; icon: string }[] = [
+  { value: 'all', label: 'All Space Types', icon: '🅿️' },
+  { value: 'covered', label: 'Covered / Roofed', icon: '☔' },
+  { value: 'underground', label: 'Underground / Basement', icon: '🏢' },
+  { value: 'gated', label: 'Gated Residential', icon: '🔒' },
+  { value: 'open', label: 'Open Driveway / Lot', icon: '☀️' },
 ];
 
 export default function SearchBar() {
@@ -39,18 +57,32 @@ export default function SearchBar() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchFilters.destination);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isVehicleDropdownOpen, setIsVehicleDropdownOpen] = useState(false);
+  const [isSpaceTypeDropdownOpen, setIsSpaceTypeDropdownOpen] = useState(false);
+  
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const vehicleDropdownRef = useRef<HTMLDivElement>(null);
+  const spaceTypeDropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedVehicleOption = VEHICLE_OPTIONS.find((opt) => opt.value === searchFilters.vehicle_size) || VEHICLE_OPTIONS[0];
+  const selectedSpaceOption = SPACE_TYPE_OPTIONS.find((opt) => opt.value === searchFilters.space_type) || SPACE_TYPE_OPTIONS[0];
 
   // Sync search input if destination changes externally
   useEffect(() => {
     setSearchInput(searchFilters.destination);
   }, [searchFilters.destination]);
 
-  // Close suggestions on outside click
+  // Close suggestions and dropdowns on outside click
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
+      }
+      if (vehicleDropdownRef.current && !vehicleDropdownRef.current.contains(e.target as Node)) {
+        setIsVehicleDropdownOpen(false);
+      }
+      if (spaceTypeDropdownRef.current && !spaceTypeDropdownRef.current.contains(e.target as Node)) {
+        setIsSpaceTypeDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleOutsideClick);
@@ -191,24 +223,68 @@ export default function SearchBar() {
           </button>
         </div>
 
-        {/* Vehicle Size Dropdown (Visible on Desktop / Tablets) */}
-        <div className="hidden sm:block shrink-0">
-          <select
-            value={searchFilters.vehicle_size}
-            onChange={(e) =>
-              setSearchFilters((prev) => ({
-                ...prev,
-                vehicle_size: e.target.value as VehicleSize | 'all',
-              }))
-            }
-            className="w-auto px-3.5 py-3 rounded-xl border border-[#383028] bg-[#100e0d] hover:bg-[#14120f] text-[#f6f2ec] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60 transition cursor-pointer"
+        {/* Vehicle Size Custom Dropdown (Visible on Desktop / Tablets) */}
+        <div ref={vehicleDropdownRef} className="hidden sm:block relative shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setIsVehicleDropdownOpen(!isVehicleDropdownOpen);
+              setShowSuggestions(false);
+            }}
+            className={`flex items-center gap-2 px-3.5 py-3 rounded-xl border text-xs font-semibold pressable transition-all cursor-pointer select-none ${
+              isVehicleDropdownOpen || searchFilters.vehicle_size !== 'all'
+                ? 'border-[#dfba89]/70 bg-[#221c17] text-[#dfba89] shadow-sm'
+                : 'border-[#383028] bg-[#100e0d] hover:bg-[#161310] hover:border-[#dfba89]/40 text-[#f6f2ec]'
+            }`}
+            aria-expanded={isVehicleDropdownOpen}
+            aria-haspopup="listbox"
           >
-            <option value="all" className="bg-[#181512] text-[#f6f2ec]">🚗 Any Vehicle Size</option>
-            <option value="2-wheeler" className="bg-[#181512] text-[#f6f2ec]">🏍️ 2-Wheeler (Bike / Scooter)</option>
-            <option value="hatchback" className="bg-[#181512] text-[#f6f2ec]">🚙 Hatchback (Swift, i20)</option>
-            <option value="compact-suv" className="bg-[#181512] text-[#f6f2ec]">🚘 Compact SUV (Creta, Seltos)</option>
-            <option value="large-suv" className="bg-[#181512] text-[#f6f2ec]">🚐 Large SUV (Fortuner, Truck)</option>
-          </select>
+            <span className="text-sm">{selectedVehicleOption.icon}</span>
+            <span>{selectedVehicleOption.label}</span>
+            <ChevronDown className={`w-3.5 h-3.5 text-[#a89682] transition-transform duration-200 ${isVehicleDropdownOpen ? 'rotate-180 text-[#dfba89]' : ''}`} />
+          </button>
+
+          {isVehicleDropdownOpen && (
+            <div 
+              role="listbox" 
+              className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-64 bg-[#161310] border border-[#383028] rounded-2xl shadow-2xl shadow-black/90 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right gpu"
+            >
+              <div className="px-3 py-1.5 text-[10px] font-bold text-[#8a7a6c] uppercase tracking-wider">
+                Select Vehicle Size
+              </div>
+              {VEHICLE_OPTIONS.map((opt) => {
+                const isSelected = searchFilters.vehicle_size === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    role="option"
+                    aria-selected={isSelected}
+                    type="button"
+                    onClick={() => {
+                      setSearchFilters((prev) => ({ ...prev, vehicle_size: opt.value }));
+                      setIsVehicleDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left pressable transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#282119] text-[#dfba89] font-bold border border-[#dfba89]/30'
+                        : 'text-[#c2b29d] hover:bg-[#221c17] hover:text-[#f6f2ec]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-base shrink-0">{opt.icon}</span>
+                      <div className="truncate">
+                        <div className="text-xs font-semibold leading-tight">{opt.label}</div>
+                        <div className="text-[10px] text-[#756758] mt-0.5 truncate">{opt.detail}</div>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 text-[#dfba89] shrink-0 ml-2" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Filters Toggle Button (Desktop) */}
@@ -330,27 +406,55 @@ export default function SearchBar() {
       {/* Expanded Filter Panel */}
       {isFilterDrawerOpen && (
         <div className="mt-3 pt-3 border-t border-[#2a231b] grid grid-cols-1 sm:grid-cols-3 gap-3 animate-in fade-in slide-in-from-top duration-250">
-          {/* Space Type */}
-          <div>
+          {/* Space Type Custom Dropdown */}
+          <div ref={spaceTypeDropdownRef} className="relative">
             <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
               Space Type
             </label>
-            <select
-              value={searchFilters.space_type}
-              onChange={(e) =>
-                setSearchFilters((prev) => ({
-                  ...prev,
-                  space_type: e.target.value as SpaceType | 'all',
-                }))
-              }
-              className="w-full px-3 py-2 rounded-lg border border-[#383028] bg-[#100e0d] text-xs text-[#f6f2ec] font-medium focus:ring-2 focus:ring-[#dfba89]/60 transition"
+            <button
+              type="button"
+              onClick={() => setIsSpaceTypeDropdownOpen(!isSpaceTypeDropdownOpen)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-medium pressable transition cursor-pointer ${
+                isSpaceTypeDropdownOpen || searchFilters.space_type !== 'all'
+                  ? 'border-[#dfba89]/70 bg-[#221c17] text-[#dfba89]'
+                  : 'border-[#383028] bg-[#100e0d] hover:bg-[#161310] text-[#f6f2ec]'
+              }`}
             >
-              <option value="all" className="bg-[#181512] text-[#f6f2ec]">All Space Types</option>
-              <option value="covered" className="bg-[#181512] text-[#f6f2ec]">Covered / Roofed</option>
-              <option value="underground" className="bg-[#181512] text-[#f6f2ec]">Underground / Basement</option>
-              <option value="gated" className="bg-[#181512] text-[#f6f2ec]">Gated Residential</option>
-              <option value="open" className="bg-[#181512] text-[#f6f2ec]">Open Driveway / Lot</option>
-            </select>
+              <div className="flex items-center gap-2">
+                <span>{selectedSpaceOption.icon}</span>
+                <span>{selectedSpaceOption.label}</span>
+              </div>
+              <ChevronDown className={`w-3.5 h-3.5 text-[#a89682] transition-transform duration-200 ${isSpaceTypeDropdownOpen ? 'rotate-180 text-[#dfba89]' : ''}`} />
+            </button>
+
+            {isSpaceTypeDropdownOpen && (
+              <div className="absolute left-0 right-0 mt-1.5 bg-[#161310] border border-[#383028] rounded-xl shadow-2xl p-1 z-50 animate-in fade-in zoom-in-95 duration-150 origin-top gpu">
+                {SPACE_TYPE_OPTIONS.map((opt) => {
+                  const isSelected = searchFilters.space_type === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setSearchFilters((prev) => ({ ...prev, space_type: opt.value }));
+                        setIsSpaceTypeDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#282119] text-[#dfba89] font-bold'
+                          : 'text-[#c2b29d] hover:bg-[#201c18] hover:text-[#f6f2ec]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{opt.icon}</span>
+                        <span>{opt.label}</span>
+                      </div>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-[#dfba89]" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Amenities checklist */}
