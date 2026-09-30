@@ -17,7 +17,6 @@ import {
   Lock,
   Download,
   CheckCircle2,
-  Palette
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -41,7 +40,6 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
     activeDriverBooking,
     setIsListSpotOpen,
     setIsAuthModalOpen,
-    setIsNavCustomizerOpen,
     requestSignOut,
     addToast,
   } = useApp();
@@ -270,22 +268,6 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
                             <span>Install Parkable App</span>
                           </>
                         )}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setIsNavCustomizerOpen(true);
-                          setIsUserMenuOpen(false);
-                        }}
-                        className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-[#dfba89] hover:bg-[#25201a] rounded-lg transition cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Palette className="w-4 h-4 text-[#dfba89]" />
-                          <span>Nav Bar Layouts (5 Demos)</span>
-                        </div>
-                        <span className="text-[9px] bg-[#2a221a] text-[#dfba89] px-1.5 py-0.5 rounded border border-[#dfba89]/30 font-bold uppercase">
-                          Live
-                        </span>
                       </button>
 
                       <button
