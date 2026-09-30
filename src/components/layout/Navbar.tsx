@@ -31,7 +31,7 @@ interface NavbarProps {
 
 export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
   const router = useRouter();
-  const { isInstallable, isInstalled, promptInstall, openInstallGuide } = usePwa();
+  const { isInstalled, promptInstall, openInstallGuide } = usePwa();
   const {
     currentUser,
     isAuthenticated,
@@ -127,31 +127,6 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
               </button>
             )}
 
-            {/* PWA Install / Open in App Button */}
-            {isInstalled ? (
-              <button
-                onClick={openInstallGuide}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 text-xs font-bold transition shadow-xs cursor-pointer"
-                title="Parkable is installed on your device (Click for app info)"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="hidden sm:inline">App Installed</span>
-              </button>
-            ) : (
-              <button
-                onClick={async () => {
-                  const installed = await promptInstall();
-                  if (installed) {
-                    addToast('Parkable Installed! 🚀', 'Parkable is now installed on your device.', 'success');
-                  }
-                }}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#dfba89]/40 bg-[#dfba89]/10 hover:bg-[#dfba89]/20 text-[#dfba89] text-xs font-bold transition shadow-xs cursor-pointer"
-                title="Download Parkable app to your device"
-              >
-                <Download className="w-3.5 h-3.5 text-[#dfba89] shrink-0" />
-                <span className="hidden sm:inline">Install App</span>
-              </button>
-            )}
 
           {/* List a Spot CTA */}
           <button
