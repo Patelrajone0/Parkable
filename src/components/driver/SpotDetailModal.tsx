@@ -53,7 +53,7 @@ export default function SpotDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-2xl bg-[#181512] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-[#383028] max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300"
+        className="relative w-full max-w-2xl bg-[#181512] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-[#383028] max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300 gpu"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Photo or Placeholder Banner */}
@@ -270,14 +270,14 @@ export default function SpotDetailModal({
                 window.open(url, '_blank');
               }}
               title="Open Navigation"
-              className="p-2.5 sm:p-3 rounded-xl border border-[#383028] text-[#dfba89] hover:bg-[#201c18] transition"
+              className="p-2.5 sm:p-3 rounded-xl border border-[#383028] text-[#dfba89] hover:bg-[#201c18] pressable transition"
             >
               <Navigation className="w-4 h-4 sm:w-5 sm:h-5 text-[#dfba89]" />
             </button>
 
             <button
               onClick={() => onBookNow(spot)}
-              className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5 sm:gap-2 active:scale-95"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5 sm:gap-2 pressable cursor-pointer"
             >
               <span>Book Spot Now</span>
               <ChevronRight className="w-4 h-4" />

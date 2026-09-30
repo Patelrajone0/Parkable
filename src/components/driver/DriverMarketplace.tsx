@@ -362,7 +362,7 @@ export default function DriverMarketplace({
           ) : (
             /* Multi-column grid filling the rest of the page */
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
-              {filteredSpots.map((spot) => {
+              {filteredSpots.map((spot, idx) => {
                 const isSelected = selectedSpot?.id === spot.id;
                 const isCharger = spot.amenities.includes('ev_charging');
 
@@ -370,9 +370,10 @@ export default function DriverMarketplace({
                   <div
                     key={spot.id}
                     onClick={() => setSelectedSpot(spot)}
-                    className={`bg-[#181512] rounded-3xl border transition-all duration-200 overflow-hidden cursor-pointer flex flex-col group shadow-lg shadow-black/40 ${
+                    style={{ animationDelay: `${Math.min(idx * 45, 360)}ms` }}
+                    className={`bg-[#181512] rounded-3xl border card-entrance card-lift content-auto overflow-hidden cursor-pointer flex flex-col group shadow-lg shadow-black/40 ${
                       isSelected
-                        ? 'border-[#dfba89] ring-2 ring-[#dfba89]/30'
+                        ? 'border-[#dfba89] ring-2 ring-[#dfba89]/40 shadow-[#dfba89]/10'
                         : 'border-[#383028] hover:border-[#dfba89]/50'
                     }`}
                   >
@@ -382,11 +383,12 @@ export default function DriverMarketplace({
                         <img
                           src={spot.photos[0]}
                           alt={spot.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1c1815] to-[#100e0d] border-b border-[#2d2620]">
-                          <div className="w-12 h-12 rounded-2xl bg-[#241f1a] border border-[#383028] flex items-center justify-center text-[#dfba89] shadow-inner mb-1.5">
+                          <div className="w-12 h-12 rounded-2xl bg-[#241f1a] border border-[#383028] flex items-center justify-center text-[#dfba89] shadow-inner mb-1.5 group-hover:scale-110 transition-transform duration-300">
                             <Car className="w-6 h-6" />
                           </div>
                           <span className="text-[11px] font-semibold text-[#a89682]">Verified Space</span>
@@ -399,7 +401,7 @@ export default function DriverMarketplace({
                           {spot.space_type}
                         </span>
                         {isCharger && (
-                          <span className="px-2.5 py-1 rounded-full bg-[#282119] text-[#dfba89] border border-[#dfba89]/40 text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                          <span className="px-2.5 py-1 rounded-full bg-[#282119]/90 backdrop-blur-md text-[#dfba89] border border-[#dfba89]/40 text-[10px] font-bold flex items-center gap-1 shadow-sm">
                             <Zap className="w-3 h-3 text-[#dfba89] fill-[#dfba89]" />
                             <span>EV Fast</span>
                           </span>
@@ -407,7 +409,7 @@ export default function DriverMarketplace({
                       </div>
 
                       {/* Hourly Price Tag */}
-                      <div className="absolute bottom-3 right-3 bg-[#141210]/90 backdrop-blur-md text-white px-3 py-1 rounded-xl shadow-md border border-[#383028] flex items-baseline gap-1">
+                      <div className="absolute bottom-3 right-3 bg-[#141210]/90 backdrop-blur-md text-white px-3 py-1 rounded-xl shadow-md border border-[#383028] flex items-baseline gap-1 group-hover:border-[#dfba89]/40 transition-colors">
                         <span className="text-base font-black text-[#dfba89]">₹{spot.hourly_rate}</span>
                         <span className="text-[10px] text-[#a89682] font-semibold">/hr</span>
                       </div>
@@ -417,7 +419,7 @@ export default function DriverMarketplace({
                     <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                       <div>
                         {/* Title */}
-                        <h4 className="font-bold text-sm text-[#f6f2ec] leading-snug line-clamp-1 group-hover:text-[#dfba89] transition">
+                        <h4 className="font-bold text-sm text-[#f6f2ec] leading-snug line-clamp-1 group-hover:text-[#dfba89] transition-colors duration-200">
                           {spot.title}
                         </h4>
 
@@ -429,7 +431,7 @@ export default function DriverMarketplace({
 
                         {/* Live Distance Pill */}
                         {spot.distance_km !== undefined && (
-                          <div className="inline-flex items-center gap-1 text-[11px] font-bold text-[#dfba89] bg-[#241f1a] border border-[#dfba89]/30 px-2 py-0.5 rounded-lg mt-2">
+                          <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#dfba89] bg-[#241f1a] border border-[#dfba89]/30 px-2 py-0.5 rounded-lg mt-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#dfba89] animate-ping" />
                             <span>{spot.distance_km} km from your live location</span>
                           </div>
@@ -460,7 +462,7 @@ export default function DriverMarketplace({
                             setSelectedSpot(spot);
                             onOpenBookingModal(spot);
                           }}
-                          className="px-3 py-2 rounded-xl text-xs font-bold text-[#c2b29d] hover:text-[#f6f2ec] hover:bg-[#241f1a] transition"
+                          className="px-3 py-2 rounded-xl text-xs font-bold text-[#c2b29d] hover:text-[#f6f2ec] hover:bg-[#241f1a] pressable transition-all"
                         >
                           Spot Details
                         </button>
@@ -471,7 +473,7 @@ export default function DriverMarketplace({
                             e.stopPropagation();
                             openCheckout(spot);
                           }}
-                          className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 transition flex items-center gap-1"
+                          className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs shadow-md shadow-[#dfba89]/20 pressable transition-all flex items-center gap-1"
                         >
                           <span>Reserve Spot</span>
                           <ArrowUpRight className="w-3.5 h-3.5 text-[#12100e]" />

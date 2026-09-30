@@ -99,7 +99,7 @@ export default function CheckoutModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-lg bg-[#181512] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden border border-[#383028] flex flex-col max-h-[92vh] animate-in slide-in-from-bottom duration-300"
+        className="relative w-full max-w-lg bg-[#181512] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden border border-[#383028] flex flex-col max-h-[92vh] animate-in slide-in-from-bottom duration-300 gpu"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -272,7 +272,7 @@ export default function CheckoutModal({
                   type="button"
                   key={hours}
                   onClick={() => setDurationHours(hours)}
-                  className={`py-2.5 px-2 rounded-xl text-center border text-xs font-bold transition ${
+                  className={`py-2.5 px-2 rounded-xl text-center border text-xs font-bold pressable transition-all ${
                     durationHours === hours
                       ? 'bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] text-[#12100e] border-[#dfba89] shadow-sm'
                       : 'bg-[#201c18] text-[#c2b29d] border-[#383028] hover:bg-[#28211a]'
@@ -480,7 +480,7 @@ export default function CheckoutModal({
           <button
             type="submit"
             disabled={isProcessing || isSuccess}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] disabled:opacity-50 text-[#12100e] font-bold text-sm shadow-lg shadow-[#dfba89]/25 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] disabled:opacity-50 text-[#12100e] font-bold text-sm shadow-lg shadow-[#dfba89]/25 pressable transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
           >
             {isProcessing ? (
               <>

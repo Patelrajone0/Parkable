@@ -20,7 +20,7 @@ export default function ToastContainer() {
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-2xl border backdrop-blur-md transition-all duration-300 transform translate-y-0 ${
+            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-2xl border backdrop-blur-md transition-all duration-300 animate-in slide-in-from-bottom duration-250 gpu ${
               isSuccess
                 ? 'bg-[#181512]/95 text-[#f6f2ec] border-[#dfba89]/40 shadow-black/50'
                 : isError
@@ -46,7 +46,7 @@ export default function ToastContainer() {
 
             <button
               onClick={() => removeToast(toast.id)}
-              className="shrink-0 p-1 text-[#756758] hover:text-[#dfba89] rounded-lg hover:bg-[#241f1a] transition"
+              className="shrink-0 p-1 text-[#756758] hover:text-[#dfba89] rounded-lg hover:bg-[#241f1a] pressable transition cursor-pointer"
               aria-label="Dismiss notification"
             >
               <X className="w-4 h-4" />

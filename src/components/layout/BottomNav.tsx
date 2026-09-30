@@ -51,7 +51,7 @@ export default function BottomNav({ onOpenBookings }: BottomNavProps) {
   // =========================================================================
   if (bottomNavStyle === 'glass-obsidian') {
     return (
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all gpu">
         <div className="flex items-center justify-between max-w-[360px] mx-auto bg-[#0d0b09]/92 backdrop-blur-3xl border border-[#302720]/80 shadow-[0_16px_50px_rgba(0,0,0,0.92)] rounded-full px-2 py-1.5 pointer-events-auto ring-1 ring-white/5">
           {/* Explore */}
           <button
@@ -138,7 +138,7 @@ export default function BottomNav({ onOpenBookings }: BottomNavProps) {
   // =========================================================================
   if (bottomNavStyle === 'glass-neon') {
     return (
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all gpu">
         <div className="max-w-md mx-auto pointer-events-auto bg-[#14100c]/90 backdrop-blur-2xl border-2 border-[#dfba89]/75 shadow-[0_0_24px_rgba(223,186,137,0.3),0_14px_45px_rgba(0,0,0,0.9)] rounded-3xl px-3 py-1.5 flex items-center justify-around relative">
           {/* Explore */}
           <button
@@ -244,7 +244,7 @@ export default function BottomNav({ onOpenBookings }: BottomNavProps) {
   // =========================================================================
   if (bottomNavStyle === 'glass-split') {
     return (
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all gpu">
         <div className="max-w-md mx-auto flex items-center justify-between gap-2.5">
           {/* Pod 1: Main Glass Navigation Dock */}
           <div className="flex-1 pointer-events-auto bg-[#161310]/88 backdrop-blur-2xl border border-[#dfba89]/30 shadow-[0_12px_40px_rgba(0,0,0,0.85)] rounded-2xl px-2.5 py-1.5 flex items-center justify-around ring-1 ring-white/5">
@@ -339,7 +339,7 @@ export default function BottomNav({ onOpenBookings }: BottomNavProps) {
   // =========================================================================
   if (bottomNavStyle === 'glass-champagne') {
     return (
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all gpu">
         <div className="max-w-md mx-auto pointer-events-auto relative overflow-hidden bg-gradient-to-b from-[#1b1713]/95 via-[#14110e]/92 to-[#0d0c0a]/95 backdrop-blur-2xl border border-[#dfba89]/40 shadow-[0_16px_50px_rgba(0,0,0,0.92)] rounded-2xl px-3 py-2 flex items-center justify-around ring-1 ring-white/10">
           {/* Champagne Top Accent Line */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#dfba89] to-transparent pointer-events-none opacity-80" />
@@ -443,7 +443,7 @@ export default function BottomNav({ onOpenBookings }: BottomNavProps) {
   // OPTION 1: DEFAULT - AURA GLASS ISLAND (VisionOS Signature Halo - Your Favorite)
   // =========================================================================
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.25rem))] pointer-events-none transition-all gpu">
       <div className="max-w-md mx-auto pointer-events-auto bg-[#161310]/85 backdrop-blur-2xl border border-[#dfba89]/30 shadow-[0_12px_45px_rgba(0,0,0,0.85)] rounded-3xl px-3 py-1.5 flex items-center justify-around ring-1 ring-white/5 relative">
         {/* Explore */}
         <button

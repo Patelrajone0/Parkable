@@ -330,7 +330,10 @@ export default function ParkingMapInner({
       marker.on('click', () => {
         onSelectSpot(spot);
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.panTo([spot.lat, spot.lng]);
+          mapInstanceRef.current.flyTo([spot.lat, spot.lng], Math.max(mapInstanceRef.current.getZoom(), 14), {
+            duration: 0.7,
+            easeLinearity: 0.25,
+          });
         }
       });
 
@@ -350,7 +353,7 @@ export default function ParkingMapInner({
         <button
           type="button"
           onClick={() => setMapType('dark')}
-          className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+          className={`px-2.5 py-1 rounded-lg pressable transition cursor-pointer ${
             mapType === 'dark'
               ? 'bg-[#282119] text-[#dfba89] font-bold border border-[#dfba89]/40 shadow-xs'
               : 'hover:text-[#f6f2ec]'
@@ -361,7 +364,7 @@ export default function ParkingMapInner({
         <button
           type="button"
           onClick={() => setMapType('streets')}
-          className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+          className={`px-2.5 py-1 rounded-lg pressable transition cursor-pointer ${
             mapType === 'streets'
               ? 'bg-[#282119] text-[#dfba89] font-bold border border-[#dfba89]/40 shadow-xs'
               : 'hover:text-[#f6f2ec]'
@@ -372,7 +375,7 @@ export default function ParkingMapInner({
         <button
           type="button"
           onClick={() => setMapType('satellite')}
-          className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+          className={`px-2.5 py-1 rounded-lg pressable transition cursor-pointer ${
             mapType === 'satellite'
               ? 'bg-[#282119] text-[#dfba89] font-bold border border-[#dfba89]/40 shadow-xs'
               : 'hover:text-[#f6f2ec]'

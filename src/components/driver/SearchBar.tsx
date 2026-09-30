@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { 
   Search, 
@@ -10,9 +10,10 @@ import {
   Zap, 
   ShieldCheck, 
   Clock, 
-  X,
-  Filter,
-  Compass
+  X, 
+  Filter, 
+  Compass,
+  Sparkles
 } from 'lucide-react';
 import { VehicleSize, SpaceType } from '@/types';
 
@@ -37,15 +38,38 @@ export default function SearchBar() {
 
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [searchInput, setSearchInput] = useState(searchFilters.destination);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync search input if destination changes externally
   useEffect(() => {
     setSearchInput(searchFilters.destination);
   }, [searchFilters.destination]);
 
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const handleSelectLocation = (loc: { name: string; lat: number; lng: number }) => {
+    setSearchInput(loc.name);
+    setMapCenter([loc.lat, loc.lng]);
+    setMapZoom(15);
+    setSearchFilters((prev) => ({ ...prev, destination: loc.name, lat: loc.lat, lng: loc.lng }));
+    setShowSuggestions(false);
+    addToast('Location updated', `Centered map around ${loc.name}`, 'info');
+  };
+
   // Handle location search
   const handleLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowSuggestions(false);
     if (!searchInput.trim()) return;
 
     // Check if matching popular locations
@@ -54,32 +78,37 @@ export default function SearchBar() {
     );
 
     if (matched) {
-      setMapCenter([matched.lat, matched.lng]);
-      setMapZoom(15);
-      setSearchFilters((prev) => ({ ...prev, destination: matched.name, lat: matched.lat, lng: matched.lng }));
-      addToast('Location updated', `Centered map around ${matched.name}`, 'info');
+      handleSelectLocation(matched);
     } else {
       setSearchFilters((prev) => ({ ...prev, destination: searchInput }));
       addToast('Searching destination', `Filtering spots near "${searchInput}"`, 'info');
     }
   };
 
+  const filteredSuggestions = POPULAR_LOCATIONS.filter((loc) =>
+    searchInput ? loc.name.toLowerCase().includes(searchInput.toLowerCase()) : true
+  );
+
   return (
-    <div className="w-full bg-[#181512] rounded-2xl sm:rounded-3xl shadow-xl shadow-black/50 border border-[#383028] p-2.5 sm:p-4 backdrop-blur-md">
+    <div className="w-full bg-[#181512]/95 rounded-2xl sm:rounded-3xl shadow-xl shadow-black/50 border border-[#383028] p-2.5 sm:p-4 backdrop-blur-md transition-all duration-200">
       {/* Top search input row */}
       <form onSubmit={handleLocationSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
         {/* Search input with pin and action buttons */}
         <div className="flex items-center gap-1.5 flex-1">
-          <div className="relative flex-1">
+          <div ref={searchContainerRef} className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#dfba89]">
               <MapPin className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             </div>
             <input
               type="text"
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setShowSuggestions(true);
+              }}
               placeholder="Search area, landmark..."
-              className="w-full pl-9 sm:pl-11 pr-16 sm:pr-20 py-2.5 sm:py-3 bg-[#100e0d] hover:bg-[#14120f] focus:bg-[#100e0d] text-[#f6f2ec] text-xs sm:text-sm font-medium rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60 focus:border-transparent placeholder-[#756758] transition"
+              className="w-full pl-9 sm:pl-11 pr-16 sm:pr-20 py-2.5 sm:py-3 bg-[#100e0d] hover:bg-[#14120f] focus:bg-[#100e0d] text-[#f6f2ec] text-xs sm:text-sm font-medium rounded-xl border border-[#383028] focus:outline-none focus:ring-2 focus:ring-[#dfba89]/60 focus:border-transparent placeholder-[#756758] transition-all duration-200"
             />
             <div className="absolute inset-y-0 right-0 pr-1.5 flex items-center gap-0.5">
               {searchInput && (
@@ -89,7 +118,7 @@ export default function SearchBar() {
                     setSearchInput('');
                     setSearchFilters((prev) => ({ ...prev, destination: '' }));
                   }}
-                  className="p-1 text-[#756758] hover:text-[#f6f2ec] transition cursor-pointer"
+                  className="p-1 text-[#756758] hover:text-[#f6f2ec] pressable transition cursor-pointer"
                   title="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -101,19 +130,47 @@ export default function SearchBar() {
                   requestLiveLocation();
                   addToast('Locating...', 'Fetching your live GPS location', 'info');
                 }}
-                className="p-1 sm:p-1.5 rounded-lg text-[#dfba89] hover:bg-[#221c17] transition cursor-pointer"
+                className="p-1 sm:p-1.5 rounded-lg text-[#dfba89] hover:bg-[#221c17] pressable transition cursor-pointer"
                 title="Use current live location"
               >
                 <Compass className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLocating ? 'animate-spin' : ''}`} />
               </button>
             </div>
+
+            {/* Quick Autocomplete Suggestions Dropdown */}
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[#161310] border border-[#383028] rounded-2xl shadow-2xl p-1.5 animate-in fade-in slide-in-from-top duration-200 max-h-56 overflow-y-auto">
+                <div className="px-2.5 py-1 text-[10px] font-bold text-[#a89682] uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-[#dfba89]" />
+                  <span>Popular Locations</span>
+                </div>
+                {filteredSuggestions.map((loc) => (
+                  <button
+                    key={loc.name}
+                    type="button"
+                    onClick={() => handleSelectLocation(loc)}
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left hover:bg-[#241f1a] pressable transition cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MapPin className="w-3.5 h-3.5 text-[#dfba89] shrink-0 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs text-[#f6f2ec] font-semibold truncate group-hover:text-[#dfba89] transition-colors">
+                        {loc.name}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-[#a89682] font-mono shrink-0 ml-2">
+                      Jump to area ➔
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Filters Toggle on Mobile */}
           <button
             type="button"
             onClick={() => setIsFilterDrawerOpen(!isFilterDrawerOpen)}
-            className={`sm:hidden p-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-center shrink-0 ${
+            className={`sm:hidden p-2.5 rounded-xl border text-xs font-bold pressable transition-all flex items-center justify-center shrink-0 ${
               isFilterDrawerOpen || searchFilters.has_ev || searchFilters.is_covered || searchFilters.has_cctv || searchFilters.space_type !== 'all' || searchFilters.vehicle_size !== 'all'
                 ? 'bg-[#dfba89] text-[#12100e] border-[#dfba89] shadow-sm'
                 : 'border-[#383028] bg-[#1c1814] text-[#d6c7b2]'
@@ -127,7 +184,7 @@ export default function SearchBar() {
           {/* Search Submit button on Mobile */}
           <button
             type="submit"
-            className="sm:hidden px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] text-[#12100e] font-bold text-xs shadow-md transition flex items-center justify-center shrink-0"
+            className="sm:hidden px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] text-[#12100e] font-bold text-xs shadow-md pressable transition flex items-center justify-center shrink-0"
             aria-label="Search"
           >
             <Search className="w-4 h-4 text-[#12100e]" />
@@ -158,7 +215,7 @@ export default function SearchBar() {
         <button
           type="button"
           onClick={() => setIsFilterDrawerOpen(!isFilterDrawerOpen)}
-          className={`hidden sm:flex shrink-0 items-center justify-center gap-2 px-4 py-3 rounded-xl border text-xs font-bold transition ${
+          className={`hidden sm:flex shrink-0 items-center justify-center gap-2 px-4 py-3 rounded-xl border text-xs font-bold pressable transition-all ${
             isFilterDrawerOpen || searchFilters.has_ev || searchFilters.is_covered || searchFilters.has_cctv || searchFilters.space_type !== 'all' || searchFilters.vehicle_size !== 'all'
               ? 'bg-[#dfba89] text-[#12100e] border-[#dfba89] shadow-sm'
               : 'border-[#383028] bg-[#1c1814] text-[#d6c7b2] hover:bg-[#25201a]'
@@ -174,7 +231,7 @@ export default function SearchBar() {
         {/* Search Submit button (Desktop) */}
         <button
           type="submit"
-          className="hidden sm:flex shrink-0 px-5 py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold shadow-md shadow-[#dfba89]/25 hover:shadow-lg transition items-center justify-center gap-1.5"
+          className="hidden sm:flex shrink-0 px-5 py-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold shadow-md shadow-[#dfba89]/25 hover:shadow-lg pressable transition-all items-center justify-center gap-1.5"
         >
           <Search className="w-4 h-4 text-[#12100e]" />
           <span>Search</span>
@@ -194,9 +251,9 @@ export default function SearchBar() {
               is_covered: false,
             }))
           }
-          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition ${
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 pressable transition-all ${
             searchFilters.vehicle_size === 'all' && !searchFilters.has_ev && !searchFilters.is_covered
-              ? 'bg-[#dfba89] text-[#12100e]'
+              ? 'bg-[#dfba89] text-[#12100e] shadow-xs'
               : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
           }`}
         >
@@ -211,9 +268,9 @@ export default function SearchBar() {
               vehicle_size: prev.vehicle_size === '2-wheeler' ? 'all' : '2-wheeler',
             }))
           }
-          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 pressable transition-all flex items-center gap-1 ${
             searchFilters.vehicle_size === '2-wheeler'
-              ? 'bg-[#dfba89] text-[#12100e]'
+              ? 'bg-[#dfba89] text-[#12100e] shadow-xs'
               : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
           }`}
         >
@@ -229,9 +286,9 @@ export default function SearchBar() {
               vehicle_size: prev.vehicle_size === 'compact-suv' ? 'all' : 'compact-suv',
             }))
           }
-          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 pressable transition-all flex items-center gap-1 ${
             searchFilters.vehicle_size === 'compact-suv'
-              ? 'bg-[#dfba89] text-[#12100e]'
+              ? 'bg-[#dfba89] text-[#12100e] shadow-xs'
               : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
           }`}
         >
@@ -244,9 +301,9 @@ export default function SearchBar() {
           onClick={() =>
             setSearchFilters((prev) => ({ ...prev, has_ev: !prev.has_ev }))
           }
-          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 pressable transition-all flex items-center gap-1 ${
             searchFilters.has_ev
-              ? 'bg-[#dfba89] text-[#12100e]'
+              ? 'bg-[#dfba89] text-[#12100e] shadow-xs'
               : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
           }`}
         >
@@ -259,9 +316,9 @@ export default function SearchBar() {
           onClick={() =>
             setSearchFilters((prev) => ({ ...prev, is_covered: !prev.is_covered }))
           }
-          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition flex items-center gap-1 ${
+          className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 pressable transition-all flex items-center gap-1 ${
             searchFilters.is_covered
-              ? 'bg-[#dfba89] text-[#12100e]'
+              ? 'bg-[#dfba89] text-[#12100e] shadow-xs'
               : 'bg-[#100e0d] text-[#a89682] border border-[#383028]'
           }`}
         >
@@ -272,7 +329,7 @@ export default function SearchBar() {
 
       {/* Expanded Filter Panel */}
       {isFilterDrawerOpen && (
-        <div className="mt-3 pt-3 border-t border-[#2a231b] grid grid-cols-1 sm:grid-cols-3 gap-3 animate-in fade-in duration-200">
+        <div className="mt-3 pt-3 border-t border-[#2a231b] grid grid-cols-1 sm:grid-cols-3 gap-3 animate-in fade-in slide-in-from-top duration-250">
           {/* Space Type */}
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-[#a89682] mb-1.5">
@@ -286,7 +343,7 @@ export default function SearchBar() {
                   space_type: e.target.value as SpaceType | 'all',
                 }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-[#383028] bg-[#100e0d] text-xs text-[#f6f2ec] font-medium focus:ring-2 focus:ring-[#dfba89]/60"
+              className="w-full px-3 py-2 rounded-lg border border-[#383028] bg-[#100e0d] text-xs text-[#f6f2ec] font-medium focus:ring-2 focus:ring-[#dfba89]/60 transition"
             >
               <option value="all" className="bg-[#181512] text-[#f6f2ec]">All Space Types</option>
               <option value="covered" className="bg-[#181512] text-[#f6f2ec]">Covered / Roofed</option>
@@ -307,7 +364,7 @@ export default function SearchBar() {
                 onClick={() =>
                   setSearchFilters((prev) => ({ ...prev, has_ev: !prev.has_ev }))
                 }
-                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition ${
+                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 pressable transition-all ${
                   searchFilters.has_ev
                     ? 'bg-[#dfba89]/15 border-[#dfba89] text-[#dfba89]'
                     : 'bg-[#100e0d] border-[#383028] text-[#a89682] hover:bg-[#1c1814] hover:text-[#f6f2ec]'
@@ -322,7 +379,7 @@ export default function SearchBar() {
                 onClick={() =>
                   setSearchFilters((prev) => ({ ...prev, is_covered: !prev.is_covered }))
                 }
-                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition ${
+                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 pressable transition-all ${
                   searchFilters.is_covered
                     ? 'bg-[#dfba89]/15 border-[#dfba89] text-[#dfba89]'
                     : 'bg-[#100e0d] border-[#383028] text-[#a89682] hover:bg-[#1c1814] hover:text-[#f6f2ec]'
@@ -336,7 +393,7 @@ export default function SearchBar() {
                 onClick={() =>
                   setSearchFilters((prev) => ({ ...prev, has_cctv: !prev.has_cctv }))
                 }
-                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition ${
+                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 pressable transition-all ${
                   searchFilters.has_cctv
                     ? 'bg-[#dfba89]/15 border-[#dfba89] text-[#dfba89]'
                     : 'bg-[#100e0d] border-[#383028] text-[#a89682] hover:bg-[#1c1814] hover:text-[#f6f2ec]'
@@ -360,7 +417,7 @@ export default function SearchBar() {
                     is_covered: false,
                   })
                 }
-                className="px-3 py-1.5 text-xs text-[#e08272] hover:text-[#f09a8b] hover:underline font-semibold ml-auto"
+                className="px-3 py-1.5 text-xs text-[#e08272] hover:text-[#f09a8b] hover:underline font-semibold ml-auto pressable transition"
               >
                 Reset Filters
               </button>

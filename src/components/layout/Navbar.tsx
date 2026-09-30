@@ -131,7 +131,7 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
           {/* List a Spot CTA */}
           <button
             onClick={() => setIsListSpotOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold shadow-md shadow-[#d4a373]/20 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold shadow-md shadow-[#d4a373]/20 hover:shadow-lg pressable transition-all duration-200 cursor-pointer"
           >
             <PlusCircle className="w-4 h-4 text-[#12100e]" />
             <span>List a Spot</span>
@@ -141,7 +141,7 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
           {!currentUser || !isAuthenticated ? (
             <Link
               href="/login"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs transition shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-bold text-xs pressable transition shadow-sm"
             >
               <User className="w-3.5 h-3.5" />
               <span>Sign In</span>
@@ -150,7 +150,7 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full border border-[#383028] hover:border-[#d4a373]/50 bg-[#181512] shadow-xs hover:shadow transition"
+                className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full border border-[#383028] hover:border-[#d4a373]/50 bg-[#181512] shadow-xs hover:shadow pressable transition"
                 aria-label="User menu"
               >
                 <div className="relative w-7 h-7 rounded-full overflow-hidden bg-[#241f1a]">
@@ -182,7 +182,7 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
                     className="fixed inset-0 z-40"
                     onClick={() => setIsUserMenuOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-1.5rem)] bg-[#181512] rounded-2xl shadow-2xl shadow-black/80 border border-[#383028] py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-1.5rem)] bg-[#181512] rounded-2xl shadow-2xl shadow-black/80 border border-[#383028] py-2 z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right gpu">
                     <div className="px-4 py-2.5 border-b border-[#2d2620]">
                       <p className="text-xs font-semibold text-[#f6f2ec]">{currentUser.name}</p>
                       <p className="text-xs text-[#a89682] truncate">{currentUser.email}</p>

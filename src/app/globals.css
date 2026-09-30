@@ -21,6 +21,11 @@
   --background: #0e0d0c;
   --foreground: #f6f2ec;
 
+  /* Fluid Physics Easings (VisionOS & iOS Inspired) */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+
   /* Safe Area Insets for Notch / Dynamic Island & Home Indicator */
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
@@ -31,6 +36,9 @@
 html {
   background-color: #0e0d0c;
   color-scheme: dark;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -41,6 +49,43 @@ body {
   color-scheme: dark;
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
+  overscroll-behavior-y: none;
+}
+
+/* ==========================================================================
+   HIGH-PERFORMANCE HARDWARE ACCELERATION & MICRO-INTERACTIONS
+   ========================================================================== */
+
+/* GPU Layer Promotion */
+.gpu {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
+/* Smooth active button tap feedback */
+.pressable {
+  transition: transform 0.15s var(--ease-out-expo), filter 0.15s ease;
+  will-change: transform;
+}
+.pressable:active {
+  transform: scale(0.96);
+}
+
+/* Silky card elevation & lift on hover */
+.card-lift {
+  transition: transform 0.28s var(--ease-out-expo), box-shadow 0.28s var(--ease-out-expo), border-color 0.2s ease;
+  will-change: transform, box-shadow;
+}
+.card-lift:hover {
+  transform: translateY(-3px);
+}
+
+/* Content rendering optimization for rapid list scrolling */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 320px;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera on horizontal chip lists */
@@ -50,6 +95,160 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ==========================================================================
+   ANIMATION ORCHESTRATION ENGINE (Tailwind v4 Native Support)
+   ========================================================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes zoomIn95 {
+  from {
+    opacity: 0;
+    transform: scale3d(0.95, 0.95, 1);
+  }
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes zoomOut95 {
+  from {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+  to {
+    opacity: 0;
+    transform: scale3d(0.95, 0.95, 1);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fadeInUpStagger {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes shimmerSweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes ambientPulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* Master Animate-In Orchestration Class */
+.animate-in {
+  animation-duration: 250ms;
+  animation-timing-function: var(--ease-out-expo);
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+.fade-out {
+  animation-name: fadeOut;
+}
+
+.zoom-in-95 {
+  animation-name: zoomIn95;
+}
+
+.zoom-out-95 {
+  animation-name: zoomOut95;
+}
+
+.slide-in-from-bottom {
+  animation-name: slideInFromBottom;
+}
+
+.slide-in-from-top {
+  animation-name: slideInFromTop;
+}
+
+.duration-150 { animation-duration: 150ms !important; }
+.duration-200 { animation-duration: 200ms !important; }
+.duration-250 { animation-duration: 250ms !important; }
+.duration-300 { animation-duration: 300ms !important; }
+.duration-400 { animation-duration: 400ms !important; }
+.duration-500 { animation-duration: 500ms !important; }
+
+/* Staggered card entrance */
+.card-entrance {
+  animation: fadeInUpStagger 320ms var(--ease-out-expo) both;
+  will-change: transform, opacity;
+}
+
+/* Skeleton shimmer gradient */
+.shimmer-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(24, 21, 18, 0.9) 0%,
+    rgba(45, 38, 32, 0.95) 50%,
+    rgba(24, 21, 18, 0.9) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerSweep 1.6s infinite linear;
 }
 
 /* Custom Leaflet Map styling for Dark Desert Titanium */
@@ -65,16 +264,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.22s var(--ease-out-expo), filter 0.22s ease;
+  will-change: transform;
 }
 
 .custom-marker-pin:hover {
-  transform: scale(1.15) translateY(-2px);
+  transform: scale(1.12) translateY(-2px);
   z-index: 999 !important;
 }
 
 .custom-marker-pin.selected {
-  transform: scale(1.2) translateY(-4px);
+  transform: scale(1.18) translateY(-4px);
   z-index: 1000 !important;
 }
 
@@ -157,3 +357,4 @@ body {
 .user-location-pulse {
   animation: user-pulse 2s infinite;
 }
+
