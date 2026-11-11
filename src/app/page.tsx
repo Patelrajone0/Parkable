@@ -13,6 +13,7 @@ import CheckoutModal from '@/components/driver/CheckoutModal';
 import ListSpotModal from '@/components/host/ListSpotModal';
 import DriverBookingsModal from '@/components/driver/DriverBookingsModal';
 import ActiveBookingCard from '@/components/driver/ActiveBookingCard';
+import ChatModal from '@/components/chat/ChatModal';
 import AuthModal from '@/components/auth/AuthModal';
 import BottomNavCustomizerModal from '@/components/layout/BottomNavCustomizerModal';
 import ToastContainer from '@/components/ui/ToastContainer';
@@ -187,6 +188,9 @@ function MainApp() {
 
       {/* Bottom Nav Customizer Studio (5 Layout Demos) */}
       <BottomNavCustomizerModal />
+
+      {/* In-App Driver ⇄ Host Chat Drawer */}
+      <ChatModal />
 
       {/* Toast Feedback Notifications */}
       <ToastContainer />

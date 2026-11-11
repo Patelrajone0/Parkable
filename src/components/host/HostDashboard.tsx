@@ -24,7 +24,8 @@ import {
   Smartphone,
   Save,
   CheckCircle2,
-  Lock
+  Lock,
+  MessageSquare
 } from 'lucide-react';
 
 export default function HostDashboard() {
@@ -40,6 +41,8 @@ export default function HostDashboard() {
     platformCommissionRate,
     hostPayoutAccount,
     updateHostPayoutAccount,
+    openChat,
+    chatMessages,
     addToast,
   } = useApp();
 
@@ -399,10 +402,16 @@ export default function HostDashboard() {
                     <th className="py-3 px-4">Owner Net Payout</th>
                     <th className="py-3 px-4">Gateway & Split Ref</th>
                     <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Direct Chat</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#241f1a]">
-                  {hostBookings.map((b) => (
+                  {hostBookings.map((b) => {
+                    const unreadHost = chatMessages.filter(
+                      (m) => m.booking_id === b.id && !m.is_read && m.sender_role === 'driver'
+                    ).length;
+
+                    return (
                     <tr key={b.id} className="hover:bg-[#201c18]/60 transition">
                       <td className="py-3 px-4 font-mono font-bold text-[#dfba89]">
                         {b.id}
@@ -437,8 +446,22 @@ export default function HostDashboard() {
                           Settled
                         </span>
                       </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => openChat(b)}
+                          className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+                          title="Open live chat with driver"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 text-[#12100e]" />
+                          <span>Chat</span>
+                          {unreadHost > 0 && (
+                            <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+                          )}
+                        </button>
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

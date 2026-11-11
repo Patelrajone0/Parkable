@@ -10,7 +10,8 @@ import {
   CompanyAccount, 
   HostPayoutAccount, 
   PaymentGatewayType, 
-  PaymentMethodType 
+  PaymentMethodType,
+  ChatMessage
 } from '@/types';
 import { INITIAL_SPOTS, INITIAL_BOOKINGS, generateDemoSpotsAround } from '@/data/initialData';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -129,6 +130,17 @@ interface AppContextType {
   updateCompanyAccount: (data: Partial<CompanyAccount>) => void;
   hostPayoutAccount: HostPayoutAccount;
   updateHostPayoutAccount: (data: Partial<HostPayoutAccount>) => void;
+
+  // In-App Driver ⇄ Host Chat
+  chatMessages: ChatMessage[];
+  sendChatMessage: (bookingId: string, text: string, messageType?: 'text' | 'quick_action') => Promise<ChatMessage>;
+  markChatAsRead: (bookingId: string) => void;
+  activeChatBooking: Booking | null;
+  isChatOpen: boolean;
+  openChat: (booking: Booking) => void;
+  closeChat: () => void;
+  unreadChatCount: number;
+  isHostTyping: boolean;
 }
 
 export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -156,6 +168,7 @@ const STORAGE_KEY_NAV_GLOW = 'parkable_bottom_nav_glow_v2';
 const STORAGE_KEY_NAV_LABELS = 'parkable_bottom_nav_labels_v2';
 const STORAGE_KEY_COMPANY_ACCOUNT = 'parkable_company_account_v2';
 const STORAGE_KEY_HOST_PAYOUT = 'parkable_host_payout_v2';
+const STORAGE_KEY_CHAT_MESSAGES = 'parkable_chat_messages_v1';
 
 const DEFAULT_COMPANY_ACCOUNT: CompanyAccount = {
   company_name: 'ParkEase Technologies (Company Account)',
@@ -196,6 +209,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [platformCommissionRate, setPlatformCommissionRate] = useState<number>(0.10);
   const [companyAccount, setCompanyAccount] = useState<CompanyAccount>(DEFAULT_COMPANY_ACCOUNT);
   const [hostPayoutAccount, setHostPayoutAccount] = useState<HostPayoutAccount>(DEFAULT_HOST_PAYOUT_ACCOUNT);
+
+  // In-App Driver ⇄ Host Chat State
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [activeChatBooking, setActiveChatBooking] = useState<Booking | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
+  const [isHostTyping, setIsHostTyping] = useState<boolean>(false);
 
   const updateCompanyAccount = (data: Partial<CompanyAccount>) => {
     setCompanyAccount((prev) => {
@@ -436,6 +455,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (savedPayout) {
         try {
           setHostPayoutAccount(JSON.parse(savedPayout));
+        } catch {}
+      }
+
+      const savedChat = localStorage.getItem(STORAGE_KEY_CHAT_MESSAGES);
+      if (savedChat) {
+        try {
+          setChatMessages(JSON.parse(savedChat));
         } catch {}
       }
     } catch (e) {
@@ -774,6 +800,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       spot_image: data.spot.photos && data.spot.photos.length > 0 ? data.spot.photos[0] : undefined,
       spot_lat: data.spot.lat,
       spot_lng: data.spot.lng,
+      host_id: data.spot.host_id,
+      host_name: data.spot.host_name,
+      host_avatar: data.spot.host_avatar,
       start_time: data.startTime.toISOString(),
       end_time: endTime.toISOString(),
       total_hours: data.durationHours,
@@ -842,6 +871,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     setIsCheckoutOpen(false);
+
+    // Initialize welcome message in In-App Chat for this reservation
+    const welcomeMsg: ChatMessage = {
+      id: `msg-${Date.now()}-welcome`,
+      booking_id: newBooking.id,
+      spot_id: newBooking.spot_id,
+      sender_id: data.spot.host_id || 'host-marcus',
+      sender_name: data.spot.host_name || 'Spot Host',
+      sender_role: 'host',
+      sender_avatar: data.spot.host_avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      receiver_id: driverUser.id,
+      receiver_name: driverUser.name,
+      message: `Welcome to ${data.spot.title}! Your spot is confirmed and ready. Gate access code is ${accessCode}. Message me here if you need any directions or help upon arrival!`,
+      timestamp: new Date().toISOString(),
+      is_read: false,
+      message_type: 'system',
+    };
+
+    setChatMessages((prev) => {
+      const updated = [...prev, welcomeMsg];
+      try {
+        localStorage.setItem(STORAGE_KEY_CHAT_MESSAGES, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
     addToast(
       'Payment & Split Settled! 🚀',
       `₹${hostEarnings} routed to owner, ₹${companyCommission} platform cut credited to company account.`
@@ -894,6 +949,136 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((b) => (b.id === bookingId ? { ...b, status: 'completed' } : b))
     );
     addToast('Parking Session Completed', 'Thank you for parking with Parkable!');
+  };
+
+  // Chat Actions & Helpers
+  const openChat = (booking: Booking) => {
+    setActiveChatBooking(booking);
+    setIsChatOpen(true);
+    markChatAsRead(booking.id);
+  };
+
+  const closeChat = () => {
+    setIsChatOpen(false);
+  };
+
+  const markChatAsRead = (bookingId: string) => {
+    setChatMessages((prev) => {
+      const updated = prev.map((msg) =>
+        msg.booking_id === bookingId && !msg.is_read
+          ? { ...msg, is_read: true }
+          : msg
+      );
+      try {
+        localStorage.setItem(STORAGE_KEY_CHAT_MESSAGES, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const unreadChatCount = useMemo(() => {
+    return chatMessages.filter(
+      (m) => !m.is_read && m.sender_role !== activeRole
+    ).length;
+  }, [chatMessages, activeRole]);
+
+  const sendChatMessage = async (
+    bookingId: string,
+    text: string,
+    messageType: 'text' | 'quick_action' = 'text'
+  ): Promise<ChatMessage> => {
+    const booking = bookings.find((b) => b.id === bookingId) || activeChatBooking;
+    const senderRole = activeRole;
+    const isDriverSender = senderRole === 'driver';
+
+    const senderName = currentUser?.name || (isDriverSender ? 'Driver' : 'Spot Host');
+    const senderId = currentUser?.id || (isDriverSender ? (booking?.driver_id || 'driver-current') : (booking?.host_id || 'host-current'));
+    const senderAvatar = currentUser?.avatar_url;
+
+    const receiverId = isDriverSender
+      ? (booking?.host_id || 'host-marcus')
+      : (booking?.driver_id || 'driver-sarah');
+    const receiverName = isDriverSender
+      ? (booking?.host_name || 'Marcus Vance')
+      : (booking?.driver_name || 'Sarah Jenkins');
+
+    const newMsg: ChatMessage = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      booking_id: bookingId,
+      spot_id: booking?.spot_id || '',
+      sender_id: senderId,
+      sender_name: senderName,
+      sender_role: senderRole,
+      sender_avatar: senderAvatar,
+      receiver_id: receiverId,
+      receiver_name: receiverName,
+      message: text.trim(),
+      timestamp: new Date().toISOString(),
+      is_read: false,
+      message_type: messageType,
+    };
+
+    setChatMessages((prev) => {
+      const updated = [...prev, newMsg];
+      try {
+        localStorage.setItem(STORAGE_KEY_CHAT_MESSAGES, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    // If sent by driver, trigger an intelligent, contextual host simulation
+    if (isDriverSender && booking) {
+      setIsHostTyping(true);
+      setTimeout(() => {
+        setIsHostTyping(false);
+        const lower = text.toLowerCase();
+        let hostReply = '';
+
+        if (lower.includes('gate') || lower.includes('code') || lower.includes('passcode') || lower.includes('pin') || lower.includes('enter') || lower.includes('key')) {
+          hostReply = `Hi ${senderName.split(' ')[0]}! The gate passcode is ${booking.access_code}. Key it into the keypad or display your pass at the gate.`;
+        } else if (lower.includes('charger') || lower.includes('charging') || lower.includes('ev') || lower.includes('plug') || lower.includes('battery')) {
+          hostReply = `Hey! The Level-2 EV charger is mounted right on the side pillar. It's unlocked and ready to plug into your vehicle.`;
+        } else if (lower.includes('arrived') || lower.includes('reach') || lower.includes('here') || lower.includes('outside')) {
+          hostReply = `Welcome! I see you've arrived. The parking space is completely clear for your ${booking.vehicle_model || 'vehicle'}. Park right within the marked bay!`;
+        } else if (lower.includes('late') || lower.includes('traffic') || lower.includes('delay') || lower.includes('mins')) {
+          hostReply = `No worries at all! Take your time and drive safe. Your spot is strictly reserved until your reservation end time.`;
+        } else if (lower.includes('slot') || lower.includes('which') || lower.includes('where') || lower.includes('spot')) {
+          hostReply = `Head past the gate — your reserved bay is clearly labeled with ParkEase marking. Let me know if you need help spotting it!`;
+        } else if (lower.includes('parked') || lower.includes('locked') || lower.includes('done')) {
+          hostReply = `Awesome, thanks for the update! Have a wonderful day, and feel free to extend anytime if you need more time.`;
+        } else {
+          hostReply = `Got your message! I'm around if you need anything. Enjoy your parking session!`;
+        }
+
+        const replyMsg: ChatMessage = {
+          id: `msg-${Date.now()}-reply`,
+          booking_id: bookingId,
+          spot_id: booking.spot_id,
+          sender_id: booking.host_id || 'host-marcus',
+          sender_name: booking.host_name || 'Marcus Vance',
+          sender_role: 'host',
+          sender_avatar: booking.host_avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+          receiver_id: senderId,
+          receiver_name: senderName,
+          message: hostReply,
+          timestamp: new Date().toISOString(),
+          is_read: false,
+          message_type: 'text',
+        };
+
+        setChatMessages((prevMessages) => {
+          const updated = [...prevMessages, replyMsg];
+          try {
+            localStorage.setItem(STORAGE_KEY_CHAT_MESSAGES, JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+
+        addToast(`Host Message: ${booking.host_name || 'Host'}`, hostReply, 'info');
+      }, 1500);
+    }
+
+    return newMsg;
   };
 
   return (
@@ -974,6 +1159,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateCompanyAccount,
         hostPayoutAccount,
         updateHostPayoutAccount,
+
+        // In-App Chat
+        chatMessages,
+        sendChatMessage,
+        markChatAsRead,
+        activeChatBooking,
+        isChatOpen,
+        openChat,
+        closeChat,
+        unreadChatCount,
+        isHostTyping,
       }}
     >
       {children}

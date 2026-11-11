@@ -15,7 +15,8 @@ import {
   X,
   ChevronRight,
   Phone,
-  Car
+  Car,
+  MessageSquare
 } from 'lucide-react';
 
 interface ActiveBookingCardProps {
@@ -27,7 +28,11 @@ export default function ActiveBookingCard({
   booking,
   onClose,
 }: ActiveBookingCardProps) {
-  const { extendBooking, completeBooking, addToast } = useApp();
+  const { extendBooking, completeBooking, openChat, chatMessages, addToast } = useApp();
+
+  const unreadForThisBooking = booking
+    ? chatMessages.filter((m) => m.booking_id === booking.id && !m.is_read && m.sender_role === 'host').length
+    : 0;
 
   const [timeLeft, setTimeLeft] = useState<{
     hours: number;
@@ -190,17 +195,30 @@ export default function ActiveBookingCard({
             </button>
           </div>
 
-          {/* Bottom Complete / Check-out button */}
-          <div className="pt-1 flex items-center justify-between gap-3">
+          {/* Actions: Chat with Host & Complete Parking */}
+          <div className="pt-1 grid grid-cols-2 gap-2.5">
+            <button
+              onClick={() => openChat(booking)}
+              className="relative py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] font-black text-xs flex items-center justify-center gap-2 transition shadow-md shadow-[#dfba89]/20 cursor-pointer active:scale-95"
+            >
+              <MessageSquare className="w-4 h-4 text-[#12100e]" />
+              <span>Chat Host</span>
+              {unreadForThisBooking > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-black leading-none animate-bounce">
+                  {unreadForThisBooking}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => {
                 if (confirm('Are you ready to end this parking session?')) {
                   completeBooking(booking.id);
                 }
               }}
-              className="w-full py-2.5 rounded-xl border border-[#383028] hover:bg-[#201c18] text-[#c2b29d] hover:text-[#f6f2ec] font-bold text-xs transition"
+              className="py-2.5 px-3 rounded-xl border border-[#383028] bg-[#201c18] hover:bg-[#28221b] text-[#c2b29d] hover:text-[#f6f2ec] font-bold text-xs transition cursor-pointer text-center"
             >
-              Complete & Exit Parking
+              Exit & Complete
             </button>
           </div>
         </div>

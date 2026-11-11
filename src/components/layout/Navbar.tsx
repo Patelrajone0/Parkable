@@ -17,6 +17,7 @@ import {
   Lock,
   Download,
   CheckCircle2,
+  MessageSquare
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -38,6 +39,8 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
     activeRole,
     setActiveRole,
     activeDriverBooking,
+    openChat,
+    unreadChatCount,
     setIsListSpotOpen,
     setIsAuthModalOpen,
     requestSignOut,
@@ -111,18 +114,34 @@ export default function Navbar({ onOpenActiveBooking }: NavbarProps) {
           <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Active Booking Live Indicator (for Drivers) */}
             {activeDriverBooking && (
-              <button
-                onClick={onOpenActiveBooking}
-                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#d4a373]/15 border border-[#d4a373]/40 text-[#dfba89] hover:bg-[#d4a373]/25 text-xs font-bold transition shadow-xs animate-pulse"
-                title="Click to view active parking countdown and directions"
-              >
-                <div className="w-2 h-2 rounded-full bg-[#dfba89] animate-ping" />
-                <Clock className="w-3.5 h-3.5 text-[#dfba89]" />
-                <span className="hidden sm:inline">Active Parking</span>
-                <span className="text-[10px] font-mono bg-[#d4a373]/30 text-[#f3dfc6] px-1.5 py-0.5 rounded">
-                  Live
-                </span>
-              </button>
+              <>
+                <button
+                  onClick={onOpenActiveBooking}
+                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-[#d4a373]/15 border border-[#d4a373]/40 text-[#dfba89] hover:bg-[#d4a373]/25 text-xs font-bold transition shadow-xs animate-pulse"
+                  title="Click to view active parking countdown and directions"
+                >
+                  <div className="w-2 h-2 rounded-full bg-[#dfba89] animate-ping" />
+                  <Clock className="w-3.5 h-3.5 text-[#dfba89]" />
+                  <span className="hidden sm:inline">Active Parking</span>
+                  <span className="text-[10px] font-mono bg-[#d4a373]/30 text-[#f3dfc6] px-1.5 py-0.5 rounded">
+                    Live
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => openChat(activeDriverBooking)}
+                  className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[#1c1814] hover:bg-[#28221b] border border-[#383028] hover:border-[#dfba89]/50 text-[#dfba89] transition cursor-pointer shadow-xs"
+                  title="Open live chat with spot host"
+                  aria-label="Open live chat with spot host"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-[#dfba89]" />
+                  {unreadChatCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[9px] font-black flex items-center justify-center shadow-xs animate-bounce">
+                      {unreadChatCount}
+                    </span>
+                  )}
+                </button>
+              </>
             )}
 
 

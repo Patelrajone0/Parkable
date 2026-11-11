@@ -91,6 +91,9 @@ export interface Booking {
   spot_image?: string;
   spot_lat: number;
   spot_lng: number;
+  host_id?: string;
+  host_name?: string;
+  host_avatar?: string;
   start_time: string; // ISO string
   end_time: string;   // ISO string
   total_hours: number;
@@ -139,3 +142,20 @@ export interface SearchFilterState {
   is_covered?: boolean;
   duration_hours: number;
 }
+
+export interface ChatMessage {
+  id: string;
+  booking_id: string;
+  spot_id: string;
+  sender_id: string;
+  sender_name: string;
+  sender_role: UserRole | 'system';
+  sender_avatar?: string;
+  receiver_id: string;
+  receiver_name: string;
+  message: string;
+  timestamp: string; // ISO string
+  is_read: boolean;
+  message_type?: 'text' | 'quick_action' | 'system';
+}
+

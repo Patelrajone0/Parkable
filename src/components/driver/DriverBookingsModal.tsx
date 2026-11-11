@@ -12,7 +12,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react';
 
 interface DriverBookingsModalProps {
@@ -26,7 +27,7 @@ export default function DriverBookingsModal({
   onClose,
   onSelectActiveBooking,
 }: DriverBookingsModalProps) {
-  const { bookings, currentUser, completeBooking } = useApp();
+  const { bookings, currentUser, completeBooking, openChat, chatMessages } = useApp();
 
   if (!isOpen) return null;
 
@@ -118,13 +119,28 @@ export default function DriverBookingsModal({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          onClose();
+                          openChat(b);
+                        }}
+                        className="relative px-2.5 py-1.5 rounded-lg border border-[#dfba89]/40 bg-[#241d16] hover:bg-[#2e241c] text-[#dfba89] text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                        title="Chat with space host"
+                      >
+                        <MessageSquare className="w-3 h-3 text-[#dfba89]" />
+                        <span>Chat</span>
+                        {chatMessages.filter(m => m.booking_id === b.id && !m.is_read && m.sender_role === 'host').length > 0 && (
+                          <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                        )}
+                      </button>
+
                       <button
                         onClick={() => {
                           const url = `https://www.google.com/maps/dir/?api=1&destination=${b.spot_lat},${b.spot_lng}`;
                           window.open(url, '_blank');
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-[11px] font-bold flex items-center gap-1 shadow-xs transition"
+                        className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-[#dfba89] via-[#d4a373] to-[#b37d4e] hover:from-[#e8cfa8] hover:to-[#c59b6d] text-[#12100e] text-[11px] font-bold flex items-center gap-1 shadow-xs transition"
                       >
                         <Navigation className="w-3 h-3 text-[#12100e]" />
                         <span>Navigate</span>
